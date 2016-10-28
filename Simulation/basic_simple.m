@@ -1,4 +1,5 @@
-%Simulates the 3D tracking of the beam 
+%Uses a simpler model g(x,y) = g(x)*g(y) in the simulation 
+
 clear all;
 close all;
 clc;
