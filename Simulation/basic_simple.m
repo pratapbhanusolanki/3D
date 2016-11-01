@@ -4,15 +4,15 @@ clear all;
 close all;
 clc;
 
-x(:,1) = [4,2,2]';
-x_hat_k(:,1) = [3,0,0]';
+x(:,1) = [4,20,20]';
+x_hat_k(:,1) = [3,40,40]';
 
 y_hat_series(1) = 0;
 
 
 %Noise Covariance Matrices and Kalman filter parameters
 Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
-Q = 0.01*[1,0,0;0,10,0;0,0,10;];
+Q = 0.1*[1,0,0;0,10,0;0,0,10;];
 R = eye(3);
 R_inv = inv(R);
 R_system = 0.1*eye(2);
@@ -84,7 +84,7 @@ for i=2:num_iteration
     P_current = A*P_current*A' + Q;
     
     % Output calculation
-    measurement = x1*g(x2 + beta_bias)*g(x3 + alpha_bias) + normrnd(0,R_system(1,1));
+    measurement = exact_measurement_model(x1,x2 + beta_bias,x3 + alpha_bias) + normrnd(0,R_system(1,1));
     y = [measurement;previous_measurement; previous_previous_measurement];
     y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters);
     y_hat_series(i) = y_hat(1); 
@@ -173,7 +173,7 @@ hold on;
 %plot(-20*control_data(1:num_iteration),'k');
 plot(time,x(3,:),'r');
 plot(time,x_hat_k(3,:));
-%ylim([-20,20]);
+ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_3$$','Interpreter','Latex');
 
@@ -187,10 +187,10 @@ plot(time, y_series(1,1:num_iteration),'r');
 plot(time, y_hat_series,'b')
 legend('Simulated measurement','Estimated measurement')
 
-%ylim([-20,20]);
+ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{y}$$','Interpreter','Latex');
-%ylim([0,5]);
+ylim([0,5]);
 
 %figure;
 dummy_x = -50:0.5:50;
