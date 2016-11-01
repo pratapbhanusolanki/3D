@@ -4,21 +4,20 @@ clear all;
 close all;
 clc;
 
-x(:,1) = [4,4,5]';
+x(:,1) = [4,2,2]';
 x_hat_k(:,1) = [3,0,0]';
 
-gamma(1) = acosd(cosd(x_hat_k(2,1)/18)*cosd(x_hat_k(3,1)));
-y_hat_series(1) = x_hat_k(1,1)*gaussian_value(gamma(1));
+y_hat_series(1) = 0;
 
 
 %Noise Covariance Matrices and Kalman filter parameters
-Q_system = 0.01*[1,0,0;0,18,0;0,0,1];
-Q = 0.5*[1,0,0;0,700,0;0,0,50;];
+Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
+Q = 0.01*[1,0,0;0,10,0;0,0,10;];
 R = eye(3);
 R_inv = inv(R);
 R_system = 0.1*eye(2);
 
-P(:,:,1) = 100*[1,0,0;0,180,0;0,0,10];
+P(:,:,1) = [1,0,0;0,10,0;0,0,10];
 P_current = P(:,:,1);
 
 %System Matrices
@@ -27,13 +26,12 @@ B = [0,0;1,0;0,1];
 
 %Scanning parameters
 angle_bias(1) = 0;
-phi = 45;
+phi = 10;
 scan_radius = 10;
 
 
 %Number of iterations, it changes the length of simulation
 num_el = 800;
-
 theta(1) = 45;
 
 
@@ -41,11 +39,11 @@ theta(1) = 45;
 u2_previous = 0.1;
 u3_previous = 0.1;
 
-u2_k = 0.1;
-u3_k = 0.1;
+u2_k = 0.0;
+u3_k = 0.0;
 
-u2 = [u2_k, u2_previous];
-u3 = [u3_k, u3_previous];
+u2 = [u2_k; u2_previous];
+u3 = [u3_k; u3_previous];
 
 previous_measurement = 0;
 previous_previous_measurement = 0;
@@ -74,25 +72,26 @@ for i=2:num_iteration
 
     angle_bias(i) = angle_bias(i-1) + phi;
     bias = angle_bias(i);
-	previous_alpha_bias = scan_radius*sind(bias-phi);
-	previous_beta_bias = scan_radius*cosd(bias-phi);
 	alpha_bias = scan_radius*sind(bias);
 	beta_bias = scan_radius*cosd(bias);
     
-    alpha_diff = alpha_bias - previous_alpha_bias;
-    beta_diff = beta_bias - previous_beta_bias; 
+    previous_u = [u2,u3];
+    scan_parameters = [scan_radius, bias, phi];
     
-    C = get_C_matrix(x_hat_k(:,i-1), u2, u3,scan_radius, bias, phi);
+    C = get_C_matrix(x_hat_k(:,i-1),previous_u,scan_parameters)
     rank_C(i) = rank(C);
     rank(C);
     P_current = A*P_current*A' + Q;
     
     % Output calculation
-    measurement = x1*gaussian_value(acosd(cosd(x2/18 + beta_bias)*cosd(x3 + alpha_bias))) + normrnd(0,R_system(1,1));
+    measurement = x1*g(x2 + beta_bias)*g(x3 + alpha_bias) + normrnd(0,R_system(1,1));
     y = [measurement;previous_measurement; previous_previous_measurement];
-    y_hat = get_output_array(x_hat_k(:,i-1), u2, u3,scan_radius, bias, phi);
+    y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters);
     y_hat_series(i) = y_hat(1); 
     y_series(i) = measurement;
+    previous_measurement = measurement;
+    previous_previous_measurement = previous_measurement;
+
     
         
     % Filtering    
@@ -108,26 +107,28 @@ for i=2:num_iteration
         x_hat_k(1,i) = 0;
     end
     
-    if(difference + previous_difference < 0.5)
-        G = 0.5;
-        G2 = 0.1;
+    if(difference + previous_difference < 2)
+        G = 0.2;
+        G2 = 0.2;
     else
-        G = 0.5;
-        G2 = 0.1;
+        G = 0.1;
+        G2 = 0;
     end
+    
+    G = 0.2;
     previous_difference = difference;
     
     normal_u2 = -G*x_hat_k(2,i);
     normal_u3 = -G*x_hat_k(3,i);
     
-    alpha_u = -G*x_hat_k(3,i) + alpha_diff;
-    beta_u = -G*x_hat_k(2,i) + beta_diff;
+%     alpha_u = -G*x_hat_k(3,i) + alpha_diff;
+%     beta_u = -G*x_hat_k(2,i) + beta_diff;
+% 
+%     u2_k = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
+%     u3_k = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)));
 
-    u2_k = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
-    u3_k = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)));
-
-    u2 = [normal_u2, u2_previous];
-    u3 = [normal_u2, u3_previous];
+    u2 = [normal_u2; u2_previous];
+    u3 = [normal_u2; u3_previous];
 
     u2_previous = normal_u2;
     u3_previous = normal_u3;
@@ -189,7 +190,7 @@ legend('Simulated measurement','Estimated measurement')
 %ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{y}$$','Interpreter','Latex');
-ylim([0,5]);
+%ylim([0,5]);
 
 %figure;
 dummy_x = -50:0.5:50;
