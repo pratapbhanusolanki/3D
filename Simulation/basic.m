@@ -34,6 +34,7 @@ scan_radius = 10;
 num_el = 800;
 
 theta(1) = 45;
+psi(1) = 0;
 
 
 %Previous values needed for initialisation
@@ -132,6 +133,13 @@ for i=2:num_iteration
     u3_previous = normal_u3;
     
     x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
+    
+    theta(i) = theta(i-1) + u3_k;
+    psi(i) = psi(i-1) + u_2k;
+    
+    x(i) = cos(theta(i))*cos(psi(i));
+    y(i) = cos(theta(i))*sin(psi(i));
+    z(i) = (theta(i));
 
     t(i) = toc;
 end
@@ -194,3 +202,6 @@ ylim([0,5]);
 dummy_x = -50:0.5:50;
 dummy_y = gaussian_value(dummy_x);
 %plot(dummy_x,dummy_y);
+
+figure;
+plot3(x,y,z);

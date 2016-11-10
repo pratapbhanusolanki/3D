@@ -26,14 +26,16 @@ B = [0,0;1,0;0,1];
 
 %Scanning parameters
 angle_bias(1) = 0;
-phi = 10;
+phi = 20;
 scan_radius = 10;
 
 
-%Number of iterations, it changes the length of simulation
-num_el = 800;
+%Initial position parameters
 theta(1) = 45;
+psi(1) = -120;
 
+scan_theta(1) = 45;
+scan_psi(1) = -120;
 
 %Previous values needed for initialisation
 u2_previous = 0.1;
@@ -54,13 +56,20 @@ normal_u2 = 0;
 normal_u3 = 0;
 
 
-num_iteration = 800;
+num_iteration = 400;
 
+[X,Y] = meshgrid(-1:0.01:1);
+Z = real(sqrt(1-X.*X - Y.*Y));
+hFig = figure;
+set(hFig, 'Position', [680 678 1400 1050])
+surf(X,Y,real(Z));
+frame(1) = getframe;
+hold on;
 for i=2:num_iteration
+    i
 	tic;
 	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.0*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
-	theta(i) = theta(i-1) + u3_k;
-    
+	%theta(i) = theta(i-1) + u3_k;
     
 	x1_hat_k = x_hat_k(1,i-1);
     x2_hat_k = x_hat_k(2,i-1);
@@ -72,13 +81,18 @@ for i=2:num_iteration
 
     angle_bias(i) = angle_bias(i-1) + phi;
     bias = angle_bias(i);
+	previous_alpha_bias = scan_radius*sind(bias-phi);
+	previous_beta_bias = scan_radius*cosd(bias-phi);
 	alpha_bias = scan_radius*sind(bias);
 	beta_bias = scan_radius*cosd(bias);
+    
+    alpha_diff = alpha_bias - previous_alpha_bias;
+    beta_diff = beta_bias - previous_beta_bias; 
     
     previous_u = [u2,u3];
     scan_parameters = [scan_radius, bias, phi];
     
-    C = get_C_matrix(x_hat_k(:,i-1),previous_u,scan_parameters)
+    C = get_C_matrix(x_hat_k(:,i-1),previous_u,scan_parameters);
     rank_C(i) = rank(C);
     rank(C);
     P_current = A*P_current*A' + Q;
@@ -115,33 +129,56 @@ for i=2:num_iteration
         G2 = 0;
     end
     
-    G = 0.2;
+    %G = 0.0;
     previous_difference = difference;
     
     normal_u2 = -G*x_hat_k(2,i);
     normal_u3 = -G*x_hat_k(3,i);
     
-%     alpha_u = -G*x_hat_k(3,i) + alpha_diff;
-%     beta_u = -G*x_hat_k(2,i) + beta_diff;
-% 
-%     u2_k = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
-%     u3_k = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)));
-
     u2 = [normal_u2; u2_previous];
     u3 = [normal_u2; u3_previous];
 
     u2_previous = normal_u2;
     u3_previous = normal_u3;
     
+    psi(i) = psi(i-1) + normal_u2;
+    theta(i) = theta(i-1) + normal_u3; 
+    
     x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
-
+    
+    
+    %Computations related to plotting and motor commands
+    alpha_u = alpha_bias;
+    beta_u = beta_bias;
+ 
+    psi_offset = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
+    theta_offset = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)))-theta(i);
+    
+    scan_psi(i) = psi(i) + psi_offset;
+    scan_theta(i) = theta(i) + theta_offset;
+    
+    Motor_command_psi = scan_psi(i) - scan_psi(i-1);
+    Motor_command_theta = scan_theta(i) - scan_theta(i-1);
+    
+    
+    xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
+    yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
+    zp(i) = sind(scan_theta(i));
+    plot3(xp(i),yp(i),zp(i),'ro','MarkerFaceColor','r');
+    %drawnow;
+    frame(i) = getframe;
     t(i) = toc;
 end
+
+
 
 
 T = 0.08;
 time = T:T:num_iteration*T;
 
+
+
+figure;
 
 subplot(4,1,1);
 %plot(time,x(1,:));
@@ -196,3 +233,11 @@ ylim([0,5]);
 dummy_x = -50:0.5:50;
 dummy_y = gaussian_value(dummy_x);
 %plot(dummy_x,dummy_y);
+
+
+
+%Movie generation
+myVideo = VideoWriter('Videos/basic_scan.avi');
+open(myVideo);
+writeVideo(myVideo, frame);
+close(myVideo);

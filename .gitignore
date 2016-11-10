@@ -54,6 +54,9 @@ slprj/
 /Matlab/plots/
 /Debug/
 /.settings
+/Simulation/Figures
+/Simulation/Videos
+
 
 #Miscellenious
 .xml
