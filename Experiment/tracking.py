@@ -1,57 +1,84 @@
 import mraa  
 import time  
 import numpy as np
+import math
+import scipy as sio
+from Servo import Servo
+from Stepper import Stepper
   
-LED = mraa.Gpio(7)  
-LED.dir(mraa.DIR_OUT)  
-sensorPin = mraa.Aio(2)
 
-def usleep(x): 
-	time.sleep(x/1000000.0)
+def setup():
+	global LED
+	LED = mraa.Gpio(7)  
+	LED.dir(mraa.DIR_OUT) 
 
-class Stepper:
+	global sensorPin
+	sensorPin = mraa.Aio(2)
 
-	def __init__(self):
-		self.step = mraa.Gpio(6)
-		self.step.dir(mraa.DIR_OUT)
-		self.direction = mraa.Gpio(7)
-		self.direction.dir(mraa.DIR_OUT)
-		self.MS1 = mraa.Gpio(3)
-		self.MS1.dir(mraa.DIR_OUT)
-		self.MS2 = mraa.Gpio(4)
-		self.MS2.dir(mraa.DIR_OUT)
-		self.MS3 = mraa.Gpio(5)
-		self.MS3.dir(mraa.DIR_OUT)
-		self.enable = mraa.Gpio(2)
-		self.enable.dir(mraa.DIR_OUT)
+	global myStepper
+	myStepper = Stepper
 
-	def resetPins(self):
-		self.step.write(0)
-		self.direction.write(0)
-		self.MS1.write(1)
-		self.MS2.write(1)
-		self.MS3.write(1)
-		self.enable.write(1)
+	global myServo
+	myServo = Servo
+	myServo.attach(9)
 
-	def rotateMotor(self, angle):
-		steps = (angle*403*16)/360 
-		self.rotateStep(steps)
+def initialize():
+	global A 
+	A = np.identity(3)
 
-   	def rotateStep(self,steps):
-   		if steps > 0:
-			self.direction.write(1)  #Pull direction pin low to move "forward"
-		else:
-			self.direction.write(0)	#Pull direction pin high to move "backwards"
+	global I
+	I = np.identity(3) 
 
-		step_count = abs(steps)
-		self.enable.write(0) ##Pull enable pin low to set FETs active and allow motor control
-		for x in range(1,step_count):
-			self.step.write(1) #Trigger one step forward
-			usleep(100)
-			self.step.write(0) #Pull step pin low so it can be triggered again
-			usleep(100)
+	global B
+	I = np.matrix([[0],[1],[1]])
 
-		self.resetPins()
+	global Q
+	Q = np.matrix([[1,0,0],[0,10,0],[0,0,10]])
+	Q = 0.01*Q
+
+	global R
+	R = np.matrix([[1,0],[0,1800]])
+	R = 2*R
+
+	global P
+	P = np.matrix([[1,0,0],[0,1,0],[0,0,1]])
+	Q = 100*P
+
+def getIntensity():
+	total_intensity = 0
+	for inum in range(1,100):
+		v = (sensorPin.read()/1024.0)*7.6
+		total_intensity = total_intensity + v
+
+	avg_intensity = total_intensity/inum
+
+def gaussianValue(x)
+	a1 = 0.6922/1.0359
+   	b1 = 7.752
+   	c1 = 148.8
+   	a2 = 0.346/1.0359
+   	b2 =-13.57
+   	c2 = 325.8
+
+   	y = a1*math.exp(-((x-b1)/c1)**2) + a2*math.exp(-((x-b2)/c2)**2)
+
+def gaussianDerivative(x)
+	a1 = 0.6922/1.0359
+   	b1 = 7.752
+   	c1 = 148.8
+   	a2 = 0.346/1.0359
+   	b2 =-13.57
+   	c2 = 325.8
+   	y = -2*a1*((x-b1)/c1**2)*math.exp(-((x-b1)/c1)**2) -2*a2*((x-b2)/c2**2)*math.exp(-((x-b2)/c2)**2)
 
 
-  
+def onLED()
+	LED.write(1)
+
+def offLED()
+	LED.write(0)
+
+
+#Main function execution starts here
+setup()
+initialize()
