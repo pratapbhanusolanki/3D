@@ -21,7 +21,7 @@ NOTE: This library uses the MRAA library for use the PWM outputs.
 
 The methods are:
 
-Servo - Class for manipulating servo motors connected to
+Servo - Class for manipulating servo motors connect to
 Arduino Expansion Board for Intel Edison.
 
 attach()                - Attaches a servo motor to an PWM pin.
