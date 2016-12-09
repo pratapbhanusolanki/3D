@@ -6,12 +6,8 @@ import math
 import scipy as sio
 from servo import Servo 
 from stepper import Stepper
+import linalgfunc
   
-pi = math.pi
-sin = math.sin
-cos = math.cos
-atan2 = math.atan2
-
 def setup():
 	global LED
 	LED = mraa.Gpio(7)  
@@ -137,13 +133,13 @@ for i in range(1,num_iteration):
 	previous_u = [u2,u3]
 	scan_parameters = [scan_radius, bias, phi]
     
-	C = get_C_matrix(x_hat_k,previous_u,scan_parameters)
+	C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
 	P_current = A*P_current*A + Q
 
     #Output Calculation
 	measurement = getIntensity()
 	y = [[measurement],[previous_measurement],[previous_previous_measurement]]
-	y_hat = get_output_array(x_hat_k, previous_u,scan_parameters)
+	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
 	previous_measurement = measurement
 	previous_previous_measurement = previous_measurement
 
@@ -178,8 +174,8 @@ for i in range(1,num_iteration):
     u2_previous = normal_u2
     u3_previous = normal_u3
     
-    psi(i) = psi(i-1) + normal_u2
-    theta(i) = theta(i-1) + normal_u3
+    psi[i] = psi[i-1] + normal_u2
+    theta[i] = theta[i-1] + normal_u3
     
     x_hat_k[:,i] = x_hat_k[:,i] + [[0],[normal_u2],[normal_u3]]
 
