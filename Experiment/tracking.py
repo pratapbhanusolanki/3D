@@ -164,7 +164,7 @@ for i in range(1,num_iteration):
 	#Filtering    
 	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
 
-	x_hat[:,i] = x_hat[:,i-1]+K*(y-y_hat)
+	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
 	P_current = (np.identity(3) - K*C)*P_current
 
 	difference = abs(y[0]-y_hat[0])
@@ -195,7 +195,7 @@ for i in range(1,num_iteration):
 	psi[i] = psi[i-1] + normal_u2
 	theta[i] = theta[i-1] + normal_u3
 	pdb.set_trace()
-	x_hat_k[:,i] = x_hat_k[:,i] + [[0],[normal_u2],[normal_u3]]
+	x_hat_k[:,i] = x_hat_k[:,i] + [0,normal_u2,normal_u3]
 
 	alpha_u = alpha_bias*pi/180.0
 	beta_u = beta_bias*pi/180.0
