@@ -36,7 +36,7 @@ def get_C_matrix(x,previous_u,scan_parameters):
     C = np.zeros((3,3))
     u2 = previous_u[:,0]
     u3 = previous_u[:,1]
-    pdb.set_trace()
+    
     scan_radius = scan_parameters[0]
     bias = scan_parameters[1]
     phi = scan_parameters[2]
