@@ -143,6 +143,8 @@ previous_measurement = 2
 previous_previous_measurement = 2
 psi = np.zeros(num_iteration)
 theta = np.zeros(num_iteration)
+scan_psi = np.zeros(num_iteration)
+scan_theta = np.zeros(num_iteration)
 theta[0] = 45
 
 for i in range(1,num_iteration):
