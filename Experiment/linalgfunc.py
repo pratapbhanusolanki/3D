@@ -19,18 +19,21 @@ def tand(x):
     tempx = np.multiply(x,pi/180.0)
     return tand(tempx)
 
+def atan2d(x,y):
+    temp_theta = atan2(x,y)
+    return np.multiply(temp_theta,180.0/pi)
+
 def sind(x):
     tempx = np.multiply(x,pi/180.0)
-    return sin(tempx)
+    return asin(tempx)
+
+def asind(x):
+    temp_theta = asin(x)
+    return np.multiply(temp_theta,180.0/pi)
 
 def cosd(x):
     tempx = np.multiply(x,pi/180.0)
     return cos(tempx)
-
-def atan2d(x,y):
-    tempx = np.multiply(x,pi/180.0)
-    tempy = np.multiply(y,pi/180.0)
-    return atan2(tempx, tempy)
 
 def get_C_matrix(x,previous_u,scan_parameters):
     C = np.zeros((3,3))

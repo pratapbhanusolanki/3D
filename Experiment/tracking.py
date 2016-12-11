@@ -30,17 +30,16 @@ def tand(x):
     return tand(tempx)
 
 def atan2d(x,y):
-    tempx = np.multiply(x,pi/180.0)
-    tempy = np.multiply(y,pi/180.0)
-    return atan2(tempx, tempy)
+    temp_theta = atan2(x,y)
+    return np.multiply(temp_theta,180.0/pi)
 
 def sind(x):
     tempx = np.multiply(x,pi/180.0)
     return asin(tempx)
 
 def asind(x):
-    tempx = np.multiply(x,pi/180.0)
-    return atan2(tempx, tempy)
+    temp_theta = asin(x)
+    return np.multiply(temp_theta,180.0/pi)
 
 def cosd(x):
     tempx = np.multiply(x,pi/180.0)
