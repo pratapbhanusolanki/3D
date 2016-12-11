@@ -132,6 +132,7 @@ u2_previous = -1.0
 u3_previous = -2.0
 u2 = np.array([[0], [u2_previous]])
 u3 = np.array([[0], [u3_previous]])
+previous_differrence = 0
 previous_measurement = 2
 previous_previous_measurement = 2
 
