@@ -9,6 +9,9 @@ pi = np.pi
 global sin
 sin = np.sin
 
+global asin
+asin = np.arcsin
+
 global cos
 cos = np.cos
 
