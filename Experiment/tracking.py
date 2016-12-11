@@ -135,6 +135,9 @@ u3 = np.array([[0], [u3_previous]])
 previous_differrence = 0
 previous_measurement = 2
 previous_previous_measurement = 2
+psi = np.zeros(num_iteration)
+theta = np.zeros(num_iteration)
+theta[0] = 45
 
 for i in range(1,num_iteration):
 	print i
