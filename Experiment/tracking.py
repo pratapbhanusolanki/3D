@@ -16,6 +16,9 @@ pi = np.pi
 global sin
 sin = np.sin
 
+global asin
+asin = np.arcsin
+
 global cos
 cos = np.cos
 
@@ -26,18 +29,22 @@ def tand(x):
     tempx = np.multiply(x,pi/180.0)
     return tand(tempx)
 
-def sind(x):
-    tempx = np.multiply(x,pi/180.0)
-    return sin(tempx)
-
-def cosd(x):
-    tempx = np.multiply(x,pi/180.0)
-    return cos(tempx)
-
 def atan2d(x,y):
     tempx = np.multiply(x,pi/180.0)
     tempy = np.multiply(y,pi/180.0)
     return atan2(tempx, tempy)
+
+def sind(x):
+    tempx = np.multiply(x,pi/180.0)
+    return asin(tempx)
+
+def asind(x):
+    tempx = np.multiply(x,pi/180.0)
+    return atan2(tempx, tempy)
+
+def cosd(x):
+    tempx = np.multiply(x,pi/180.0)
+    return cos(tempx)
 
 def setup():
 	global LED
