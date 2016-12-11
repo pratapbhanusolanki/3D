@@ -194,7 +194,7 @@ for i in range(1,num_iteration):
 
 	psi[i] = psi[i-1] + normal_u2
 	theta[i] = theta[i-1] + normal_u3
-    pdb.set_trace()
+	pdb.set_trace()
 	x_hat_k[:,i] = x_hat_k[:,i] + [[0],[normal_u2],[normal_u3]]
 
 	alpha_u = alpha_bias*pi/180.0
