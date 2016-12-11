@@ -138,7 +138,7 @@ u2_previous = -1.0
 u3_previous = -2.0
 u2 = np.array([[0], [u2_previous]])
 u3 = np.array([[0], [u3_previous]])
-previous_differrence = 0
+previous_difference = 0
 previous_measurement = 2
 previous_previous_measurement = 2
 psi = np.zeros(num_iteration)
@@ -205,7 +205,7 @@ for i in range(1,num_iteration):
 	psi[i] = psi[i-1] + normal_u2
 	theta[i] = theta[i-1] + normal_u3
 	pdb.set_trace()
-	x_hat_k[:,i] = x_hat_k[:,i] + [0,normal_u2,normal_u3]
+	x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
 
 	alpha_u = alpha_bias*pi/180.0
 	beta_u = beta_bias*pi/180.0
