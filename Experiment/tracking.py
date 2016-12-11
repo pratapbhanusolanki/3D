@@ -136,7 +136,7 @@ previous_previous_measurement = 2
 
 for i in range(1,num_iteration):
 	print i
-	x_hat_k = np.mat(x_hat[:,i-1])
+	x_hat_k = x_hat[:,i-1]
 	angle_bias[i] = angle_bias[i-1] + phi
 	bias = angle_bias[i]
 	previous_alpha_bias = scan_radius*sind(bias-phi)
@@ -162,7 +162,8 @@ for i in range(1,num_iteration):
 
 	#Filtering    
 	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
-	x_hat[:,i] = x_hat_k+K*(y-y_hat)
+
+	x_hat[:,i] = x_hat[:,i-1]+K*(y-y_hat)
 	P_current = (np.identity(3) - K*C)*P_current
 
 	difference = abs(y[0]-y_hat[0])
