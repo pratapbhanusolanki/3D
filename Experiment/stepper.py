@@ -29,7 +29,7 @@ class Stepper:
 		self.enable.write(1)
 
 	def rotateMotor(self, angle):
-		steps = (angle*403*16)/360 
+		steps = int((angle*403*16)/360) 
 		self.rotateStep(steps)
 
    	def rotateStep(self,steps):
