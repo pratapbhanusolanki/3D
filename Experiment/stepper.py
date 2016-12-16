@@ -34,9 +34,9 @@ class Stepper:
 
    	def rotateStep(self,steps):
    		if steps > 0:
-			self.direction.write(1)  #Pull direction pin low to move "forward"
+			self.direction.write(0)  #Pull direction pin low to move "forward"
 		else:
-			self.direction.write(0)	#Pull direction pin high to move "backwards"
+			self.direction.write(1)	#Pull direction pin high to move "backwards"
 
 		step_count = abs(steps)
 		self.enable.write(0) ##Pull enable pin low to set FETs active and allow motor control
