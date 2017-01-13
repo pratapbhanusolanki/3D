@@ -59,13 +59,19 @@ normal_u3 = 0;
 num_iteration = 400;
 
 [X,Y] = meshgrid(-1:0.01:1);
+r_source = 1.2;
 Z = real(sqrt(1-X.*X - Y.*Y));
 hFig = figure;
-set(hFig, 'Position', [680 678 1400 1050])
+%set(hFig, 'Position', [680 678 1400 1050])
 surf(X,Y,real(Z));
 frame(1) = getframe;
 hold on;
 for i=2:num_iteration
+    
+    %set(hFig, 'Position', [680 678 1400 1050])
+    surf(X,Y,real(Z));
+    hold on;
+    axis(0.6*[-2 2 -2 2 -2 2])
     i
 	tic;
 	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.0*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
@@ -153,6 +159,9 @@ for i=2:num_iteration
  
     psi_offset = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
     theta_offset = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)))-theta(i);
+    y = angle_transform(alpha_u, beta_u, theta(i));
+    psi_offset = y(1);
+    theta_offset = y(2);
     
     scan_psi(i) = psi(i) + psi_offset;
     scan_theta(i) = theta(i) + theta_offset;
@@ -160,14 +169,28 @@ for i=2:num_iteration
     Motor_command_psi = scan_psi(i) - scan_psi(i-1);
     Motor_command_theta = scan_theta(i) - scan_theta(i-1);
     
+    %Estimated source position
+    azimuth = x_hat_k(2,i);
+    elevation = x_hat_k(3,i);
+    [xe,ye,ze] = sph2cart(azimuth,elevation,r_source);
     
+    %Actual source positions
+    azimuth = x(2,i);
+    elevation = x(3,i);
+    [xa,ya,za] = sph2cart(azimuth,elevation,r_source);
+    
+    %Actual Scan positions 
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    plot3(xp(i),yp(i),zp(i),'ro','MarkerFaceColor','r');
+    plot3(xp,yp,zp,'ro','MarkerFaceColor','y');
+    plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
+    plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
+    
     %drawnow;
     frame(i) = getframe;
     t(i) = toc;
+    hold off;
 end
 
 

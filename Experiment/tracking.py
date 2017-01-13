@@ -160,57 +160,60 @@ for i in range(1,num_iteration):
 	alpha_diff = alpha_bias - previous_alpha_bias
 	beta_diff = beta_bias - previous_beta_bias
     
-	previous_u = np.array([u2,u3])
-	scan_parameters = [scan_radius, bias, phi]
+	# previous_u = np.array([u2,u3])
+	# scan_parameters = [scan_radius, bias, phi]
     
-	C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
-	P_current = A*P_current*A + Q
+	# C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
+	# P_current = A*P_current*A + Q
 
-    #Output Calculation
-	measurement = getIntensity()
-	y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
-	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
-	previous_measurement = measurement
-	previous_previous_measurement = previous_measurement
+ #    #Output Calculation
+	# measurement = getIntensity()
+	# y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
+	# y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
+	# previous_measurement = measurement
+	# previous_previous_measurement = previous_measurement
 
-	#Filtering    
-	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
+	# #Filtering    
+	# K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
 
-	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
-	P_current = (np.identity(3) - K*C)*P_current
+	# x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
+	# P_current = (np.identity(3) - K*C)*P_current
 
-	difference = abs(y[0]-y_hat[0])
-	diff_sum = diff_sum + difference
+	# difference = abs(y[0]-y_hat[0])
+	# diff_sum = diff_sum + difference
 
-	if x_hat[1,i] < 0:
-		x_hat_k[1,i] = 0
+	# if x_hat[1,i] < 0:
+	# 	x_hat_k[1,i] = 0
    
     
-	if(difference + previous_difference < 2):
-		G = 0.2
-		G2 = 0.2
-	else:
-		G = 0.1
-		G2 = 0
+	# if(difference + previous_difference < 2):
+	# 	G = 0.2
+	# 	G2 = 0.2
+	# else:
+	# 	G = 0.1
+	# 	G2 = 0
     
-    #G = 0.0
-	previous_difference = difference
-	normal_u2 = -G*x_hat[1,i]
-	normal_u3 = -G*x_hat[2,i]
-    
-	u2 = np.array([[normal_u2], [u2_previous]])
-	u3 = np.array([[normal_u3], [u3_previous]])
+ #    #G = 0.0
+	# previous_difference = difference
+	# normal_u2 = -G*x_hat[1,i]
+	# normal_u3 = -G*x_hat[2,i]
 
-	u2_previous = normal_u2
-	u3_previous = normal_u3
+	normal_u3 = 0
+	normal_u2 = 0
+    
+	# u2 = np.array([[normal_u2], [u2_previous]])
+	# u3 = np.array([[normal_u3], [u3_previous]])
+
+	# u2_previous = normal_u2
+	# u3_previous = normal_u3
 
 	psi[i] = psi[i-1] + normal_u2
 	theta[i] = theta[i-1] + normal_u3
-	x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
+	# x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
 
 	alpha_u = alpha_bias*pi/180.0
 	beta_u = beta_bias*pi/180.0
- 
+ 	print cosd(alpha_u)*cosd(beta_u)*sind(theta[i]) + sind(alpha_u)*cosd(theta[i])
 	psi_offset = atan2d(cos(alpha_u)*sin(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta[i]) - \
 		sind(alpha_u)*cosd(theta[i]))
 	theta_offset = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta[i]) + sind(alpha_u)*cosd(theta[i]))-theta[i]
