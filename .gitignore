@@ -63,4 +63,5 @@ slprj/
 #Miscellenious
 .xml
 *.pyc
+*.DS_store
 
