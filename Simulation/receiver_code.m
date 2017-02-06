@@ -4,10 +4,29 @@ clear all;
 close all;
 clc;
 
-x(:,1) = [4,20,20]';
-x_hat_k(:,1) = [3,40,40]';
+%Scanning parameters
+angle_bias(1) = 0;
+bias = angle_bias(1);
+phi = 20;
+scan_radius = 10;
+r_source = 1.2;
+
+
+%Initial position parameters
+theta(1) = 45;
+psi(1) = 45;
+my_pos(:,1) = [0;psi(1);theta(1)]; %first entry is considered zero so as to manage the intensity term
+
+scan_theta(1) = theta(1) + scan_radius*sind(bias);
+scan_psi(1) = psi(1) + scan_radius*cosd(bias);
+
+actual_position(:,1) = [4,55,55]';
+
+x(:,1) = actual_position(:,1)-my_pos(:,1);
+x_hat_k(:,1) = [3,0,0]';
 
 y_hat_series(1) = 0;
+
 
 
 %Noise Covariance Matrices and Kalman filter parameters
@@ -23,19 +42,6 @@ P_current = P(:,:,1);
 %System Matrices
 A = eye(3);
 B = [0,0;1,0;0,1];
-
-%Scanning parameters
-angle_bias(1) = 0;
-phi = 20;
-scan_radius = 10;
-
-
-%Initial position parameters
-theta(1) = 45;
-psi(1) = -120;
-
-scan_theta(1) = 45;
-scan_psi(1) = -120;
 
 %Previous values needed for initialisation
 u2_previous = 0.1;
@@ -56,44 +62,36 @@ normal_u2 = 0;
 normal_u3 = 0;
 
 
-num_iteration = 400;
+num_iteration = 200;
 
 [X,Y] = meshgrid(-1:0.01:1);
-r_source = 1.2;
 Z = real(sqrt(1-X.*X - Y.*Y));
 hFig = figure;
-%set(hFig, 'Position', [680 678 1400 1050])
+set(hFig, 'Position', [680 678 1400 1050])
 surf(X,Y,real(Z));
 frame(1) = getframe;
 hold on;
 for i=2:num_iteration
-    
-    %set(hFig, 'Position', [680 678 1400 1050])
-    surf(X,Y,real(Z));
-    hold on;
-    axis(0.6*[-2 2 -2 2 -2 2])
     i
 	tic;
-	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.0*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	actual_position(:,i) = actual_position(:,i-1)+ 0.0*[0; 1;1/18] + 0*[normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+    my_pos(:,i) = my_pos(:,i-1)  + [0;u2_k;u3_k];
+    x1 = actual_position(1,i)- my_pos(1,i);
+    x2_temp = actual_position(2,i)- my_pos(2,i);
+    [x3,x2] = angle_transform(actual_position(3,i), x2_temp, my_pos(3,i));
 	%theta(i) = theta(i-1) + u3_k;
     
 	x1_hat_k = x_hat_k(1,i-1);
     x2_hat_k = x_hat_k(2,i-1);
     x3_hat_k = x_hat_k(3,i-1);
     
-    x1 = x(1,i);
-    x2 = x(2,i);
-    x3 = x(3,i);
-
+    x(:,i) = [x1;x2;x3];
     angle_bias(i) = angle_bias(i-1) + phi;
     bias = angle_bias(i);
 	previous_alpha_bias = scan_radius*sind(bias-phi);
 	previous_beta_bias = scan_radius*cosd(bias-phi);
 	alpha_bias = scan_radius*sind(bias);
 	beta_bias = scan_radius*cosd(bias);
-    
-    alpha_diff = alpha_bias - previous_alpha_bias;
-    beta_diff = beta_bias - previous_beta_bias; 
     
     previous_u = [u2,u3];
     scan_parameters = [scan_radius, bias, phi];
@@ -143,52 +141,52 @@ for i=2:num_iteration
     
     u2 = [normal_u2; u2_previous];
     u3 = [normal_u2; u3_previous];
+    x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
 
     u2_previous = normal_u2;
     u3_previous = normal_u3;
     
-    psi(i) = psi(i-1) + normal_u2;
-    theta(i) = theta(i-1) + normal_u3; 
+    [dummy_u3,u2_k] = angle_transform(normal_u3, normal_u2, theta(i-1));
+    u3_k = dummy_u3 - theta(i-1);
     
-    x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
+    psi(i) = psi(i-1) + u2_k;
+    theta(i) = theta(i-1) + u3_k; 
+    
+    
     
     
     %Computations related to plotting and motor commands
-    alpha_u = alpha_bias;
-    beta_u = beta_bias;
- 
-    psi_offset = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
-    theta_offset = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)))-theta(i);
-    [ theta_offset,psi_offset]= angle_transform(alpha_u, beta_u, theta(i));
+    
+    [theta_offset_temp,psi_offset] = angle_transform(alpha_bias, beta_bias, theta(i));
+    theta_offset = theta_offset_temp-theta(i);
    
+    
     scan_psi(i) = psi(i) + psi_offset;
     scan_theta(i) = theta(i) + theta_offset;
     
     Motor_command_psi = scan_psi(i) - scan_psi(i-1);
     Motor_command_theta = scan_theta(i) - scan_theta(i-1);
     
-    %Estimated source position
-    azimuth = x_hat_k(2,i)*pi/180;
-    elevation = x_hat_k(3,i)*pi/180;
-    [xe,ye,ze] = sph2cart(azimuth,elevation,r_source);
+    %My position
+    azimuth = my_pos(2,i);
+    elevation = my_pos(3,i);
+    [xe,ye,ze] = sph2cart(azimuth*pi/180,elevation*pi/180,r_source);
     
     %Actual source positions
-    azimuth = x(2,i)*pi/180;
-    elevation = x(3,i)*pi/180;
-    [xa,ya,za] = sph2cart(azimuth,elevation,r_source);
+    azimuth = actual_position(2,i);
+    elevation = actual_position(3,i);
+    [xa,ya,za] = sph2cart(azimuth*pi/180,elevation*pi/180,r_source);
     
-    %Actual Scan positions 
+    
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    plot3(xp,yp,zp,'ro','MarkerFaceColor','y');
+    plot3(xp(i),yp(i),zp(i),'yo','MarkerFaceColor','y');
     plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
     plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
-    
     %drawnow;
     frame(i) = getframe;
     t(i) = toc;
-    hold off;
 end
 
 
