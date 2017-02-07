@@ -35,7 +35,7 @@ theta(1) = 45;
 psi(1) = -120;
 
 scan_theta(1) = 45;
-scan_psi(1) = -120;
+scan_psi(1) = -110;
 
 %Previous values needed for initialisation
 u2_previous = 0.1;
@@ -74,7 +74,7 @@ for i=2:num_iteration
     axis(0.6*[-2 2 -2 2 -2 2])
     i
 	tic;
-	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.0*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.1*[0; 1;1] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
 	%theta(i) = theta(i-1) + u3_k;
     
 	x1_hat_k = x_hat_k(1,i-1);
@@ -146,20 +146,19 @@ for i=2:num_iteration
 
     u2_previous = normal_u2;
     u3_previous = normal_u3;
+    [dummy_u3,u2_k] = angle_transform(normal_u3, normal_u2, theta(i-1));
+    u3_k = dummy_u3 - theta(i-1);
     
-    psi(i) = psi(i-1) + normal_u2;
-    theta(i) = theta(i-1) + normal_u3; 
+    psi(i) = psi(i-1) + u2_k;
+    theta(i) = theta(i-1) + u3_k; 
+    
     
     x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
     
     
     %Computations related to plotting and motor commands
-    alpha_u = alpha_bias;
-    beta_u = beta_bias;
- 
-    psi_offset = atan2d(cosd(alpha_u)*sind(beta_u), cosd(alpha_u)*cosd(beta_u)*cosd(theta(i)) - sind(alpha_u)*cosd(theta(i)));
-    theta_offset = asind(cosd(alpha_u)*cosd(beta_u)*sind(theta(i)) + sind(alpha_u)*cosd(theta(i)))-theta(i);
-    [ theta_offset,psi_offset]= angle_transform(alpha_u, beta_u, theta(i));
+     [theta_offset_temp,psi_offset] = angle_transform(alpha_bias, beta_bias, theta(i));
+    theta_offset = theta_offset_temp-theta(i);
    
     scan_psi(i) = psi(i) + psi_offset;
     scan_theta(i) = theta(i) + theta_offset;
@@ -168,20 +167,27 @@ for i=2:num_iteration
     Motor_command_theta = scan_theta(i) - scan_theta(i-1);
     
     %Estimated source position
-    azimuth = x_hat_k(2,i)*pi/180;
-    elevation = x_hat_k(3,i)*pi/180;
+    [elevation,azimuth] = angle_transform(x_hat_k(3,i),x_hat_k(2,i),theta(i));
+    azimuth = (azimuth+psi(i))*pi/180;
+    elevation = (elevation)*pi/180;
     [xe,ye,ze] = sph2cart(azimuth,elevation,r_source);
     
     %Actual source positions
-    azimuth = x(2,i)*pi/180;
-    elevation = x(3,i)*pi/180;
-    [xa,ya,za] = sph2cart(azimuth,elevation,r_source);
+     [elevation,azimuth] = angle_transform(x(3,i),x(2,i),theta(i));
+    azimuth = (azimuth+psi(i))*pi/180;
+    elevation = (elevation)*pi/180;
+    [xa,ya,za] = sph2cart(azimuth,elevation,r_source*1.5);
+    
+    %Mean receiver position
+    azimuth = (azimuth+psi(i))*pi/180;
+    elevation = (elevation+psi(i))*pi/180;
+    %[xe,ye,ze] = sph2cart(azimuth,elevation,r_source);
     
     %Actual Scan positions 
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    plot3(xp,yp,zp,'ro','MarkerFaceColor','y');
+    plot3(xp,yp,zp,'-y','MarkerFaceColor','y');
     plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
     plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
     
