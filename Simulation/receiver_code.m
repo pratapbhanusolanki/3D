@@ -20,9 +20,9 @@ my_pos(:,1) = [0;psi(1);theta(1)]; %first entry is considered zero so as to mana
 scan_theta(1) = theta(1) + scan_radius*sind(bias);
 scan_psi(1) = psi(1) + scan_radius*cosd(bias);
 
-actual_position(:,1) = [4,55,55]';
+actual_position(:,1) = [-4,55,55]'; % -4 so as to keep x1 positive 
 
-x(:,1) = actual_position(:,1)-my_pos(:,1);
+x(:,1) = my_pos(:,1)-actual_position(:,1);
 x_hat_k(:,1) = [3,0,0]';
 
 y_hat_series(1) = 0;
@@ -74,11 +74,11 @@ hold on;
 for i=2:num_iteration
     i
 	tic;
-	actual_position(:,i) = actual_position(:,i-1)+ 0.0*[0; 1;1/18] + 0*[normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	actual_position(:,i) = actual_position(:,i-1)+ 0.1*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
     my_pos(:,i) = my_pos(:,i-1)  + [0;u2_k;u3_k];
-    x1 = actual_position(1,i)- my_pos(1,i);
-    x2_temp = actual_position(2,i)- my_pos(2,i);
-    [x3,x2] = angle_transform(actual_position(3,i), x2_temp, my_pos(3,i));
+    x1 = my_pos(1,i)-actual_position(1,i);
+    x2_temp = my_pos(2,i)-actual_position(2,i);
+    [x3,x2] = angle_transform(my_pos(3,i), x2_temp, -actual_position(3,i));
 	%theta(i) = theta(i-1) + u3_k;
     
 	x1_hat_k = x_hat_k(1,i-1);
@@ -110,8 +110,6 @@ for i=2:num_iteration
     previous_measurement = measurement;
     previous_previous_measurement = previous_measurement;
 
-    
-        
     % Filtering    
     K = P_current*C'*inv(C*P_current*C' + R);
     x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
@@ -136,8 +134,8 @@ for i=2:num_iteration
     %G = 0.0;
     previous_difference = difference;
     
-    normal_u2 = -G*x_hat_k(2,i);
-    normal_u3 = -G*x_hat_k(3,i);
+    normal_u2 = -G*x_hat_k(2,i)
+    normal_u3 = -G*x_hat_k(3,i)
     
     u2 = [normal_u2; u2_previous];
     u3 = [normal_u2; u3_previous];

@@ -74,7 +74,7 @@ for i=2:num_iteration
     axis(0.6*[-2 2 -2 2 -2 2])
     i
 	tic;
-	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0.1*[0; 1;1] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	x(:,i) = x(:,i-1)+ [0; normal_u2;normal_u3] + 0*0.1*[0; 1;1] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
 	%theta(i) = theta(i-1) + u3_k;
     
 	x1_hat_k = x_hat_k(1,i-1);
@@ -187,7 +187,7 @@ for i=2:num_iteration
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    plot3(xp,yp,zp,'-y','MarkerFaceColor','y');
+    plot3(xp,yp,zp,'yo','MarkerFaceColor','y');
     plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
     plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
     
