@@ -74,7 +74,7 @@ hold on;
 for i=2:num_iteration
     i
 	tic;
-	actual_position(:,i) = actual_position(:,i-1)+ 0.1*[0; 1;1/18] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	actual_position(:,i) = actual_position(:,i-1)+ 0.08*[0; 1;1] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
     my_pos(:,i) = my_pos(:,i-1)  + [0;u2_k;u3_k];
     x1 = my_pos(1,i)-actual_position(1,i);
     x2_temp = my_pos(2,i)-actual_position(2,i);
@@ -123,19 +123,20 @@ for i=2:num_iteration
         x_hat_k(1,i) = 0;
     end
     
-    if(difference + previous_difference < 2)
-        G = 0.2;
+    if(difference + previous_difference < 1)
+        G = 1
         G2 = 0.2;
+        scan_radius = 4
     else
-        G = 0.1;
+        G = 0.2
         G2 = 0;
     end
     
     %G = 0.0;
     previous_difference = difference;
     
-    normal_u2 = -G*x_hat_k(2,i)
-    normal_u3 = -G*x_hat_k(3,i)
+    normal_u2 = -G*x_hat_k(2,i);
+    normal_u3 = -G*x_hat_k(3,i);
     
     u2 = [normal_u2; u2_previous];
     u3 = [normal_u2; u3_previous];
