@@ -126,7 +126,7 @@ initialize()
 
 
 #Variables Initialization
-num_iteration = 2
+num_iteration = 200
 diff_sum = 0
 x_hat = np.zeros((3,num_iteration))
 x_hat[:,0] = [3,0,0]
@@ -193,6 +193,12 @@ for i in range(1,num_iteration):
 	# 	G = 0.1
 	# 	G2 = 0
     
+
+
+
+
+
+
  #    #G = 0.0
 	# previous_difference = difference
 	# normal_u2 = -G*x_hat[1,i]
@@ -200,6 +206,7 @@ for i in range(1,num_iteration):
 
 	normal_u3 = 0
 	normal_u2 = 0
+
     
 	# u2 = np.array([[normal_u2], [u2_previous]])
 	# u3 = np.array([[normal_u3], [u3_previous]])
