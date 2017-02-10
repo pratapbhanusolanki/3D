@@ -45,6 +45,7 @@ slprj/
 *.mtc1
 *.out
 *.synctex.gz
+*.avi
 
 
 
@@ -57,10 +58,10 @@ slprj/
 /.settings
 /Simulation/Figures
 /Simulation/Videos
-/Simulation
 
 
 #Miscellenious
 .xml
 *.pyc
+*.DS_store
 
