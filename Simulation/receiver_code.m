@@ -107,8 +107,9 @@ for i=2:num_iteration
     y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters);
     y_hat_series(i) = y_hat(1); 
     y_series(i) = measurement;
-    previous_measurement = measurement;
     previous_previous_measurement = previous_measurement;
+    previous_measurement = measurement;
+    
 
     % Filtering    
     K = P_current*C'*inv(C*P_current*C' + R);
@@ -150,16 +151,11 @@ for i=2:num_iteration
     
     psi(i) = psi(i-1) + u2_k;
     theta(i) = theta(i-1) + u3_k; 
-    
-    
-    
-    
+
     %Computations related to plotting and motor commands
-    
     [theta_offset_temp,psi_offset] = angle_transform(alpha_bias, beta_bias, theta(i));
     theta_offset = theta_offset_temp-theta(i);
    
-    
     scan_psi(i) = psi(i) + psi_offset;
     scan_theta(i) = theta(i) + theta_offset;
     

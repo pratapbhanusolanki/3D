@@ -1,5 +1,4 @@
 function y = get_C_matrix(x,previous_u,scan_parameters)
-
     u2 = previous_u(:,1);
     u3 = previous_u(:,2);
     

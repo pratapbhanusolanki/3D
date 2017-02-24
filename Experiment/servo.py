@@ -155,6 +155,7 @@ class Servo:
             self._pwm.write((self._uSecs/1000000.0)/self._period)
 
     def write(self, angle):
+        angle = angle + 90
         """
         Sets the servo angle in degrees.
 

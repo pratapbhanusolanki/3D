@@ -45,3 +45,4 @@ class Stepper:
 			usleep(100)
 			self.step.write(0) #Pull step pin low so it can be triggered again
 			usleep(100)
+		self.resetPins()

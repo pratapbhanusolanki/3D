@@ -58,10 +58,13 @@ slprj/
 /.settings
 /Simulation/Figures
 /Simulation/Videos
+/Experiment/pathdef.m
 
 
 #Miscellenious
 .xml
 *.pyc
 *.DS_store
+*.npy
+*.npz
 

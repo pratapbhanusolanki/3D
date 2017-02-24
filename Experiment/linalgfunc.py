@@ -28,7 +28,7 @@ def atan2d(x,y):
 
 def sind(x):
     tempx = np.multiply(x,pi/180.0)
-    return asin(tempx)
+    return sin(tempx)
 
 def asind(x):
     temp_theta = asin(x)
@@ -40,8 +40,8 @@ def cosd(x):
 
 def get_C_matrix(x,previous_u,scan_parameters):
     C = np.zeros((3,3))
-    u2 = previous_u[:,0]
-    u3 = previous_u[:,1]
+    u2 = previous_u[0,:]
+    u3 = previous_u[1,:]
     
     scan_radius = scan_parameters[0]
     bias = scan_parameters[1]
@@ -65,14 +65,14 @@ def get_C_matrix(x,previous_u,scan_parameters):
     x2 = x[1]-u2[0]-u2[1] + beta_biases[2]
     x3 = x[2]-u3[0]-u3[1] + alpha_biases[2]
     C[2,:] = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)]
-
-    y = C*[[1,0,0], [0,scaling_coefficient,0], [0,0,scaling_coefficient]]
+    #pdb.set_trace()
+    Adum = np.matrix([[1,0,0],[0,scaling_coefficient,0],[0,0,scaling_coefficient]])
+    y = C*Adum
     return y
 
 def get_output_array(x,previous_u,scan_parameters):
-    u2 = previous_u[:,0]
-    u3 = previous_u[:,1]
-
+    u2 = previous_u[0,:]
+    u3 = previous_u[1,:]
     scan_radius = scan_parameters[0]
     bias = scan_parameters[1]
     phi = scan_parameters[2]
@@ -109,7 +109,7 @@ def g(x):
     x = x*18
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
-    y=a1*np.exp(arg1) + a2*np.exp(arg2)
+    y=a1*np.exp(-arg1) + a2*np.exp(-arg2)
     return y
 
 #computes the derivative of the gaussian function y = g_d(x)
@@ -123,6 +123,24 @@ def g_d(x):
     x = x*18
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
-    y = -2*a1*((x-b1)/(c1*c1))*np.exp(arg1) -2*a2*((x-b2)/(c2*c2))*np.exp(arg2)
+    y = -2*a1*((x-b1)/(c1*c1))*np.exp(-arg1) -2*a2*((x-b2)/(c2*c2))*np.exp(-arg2)
     y = 18*y
     return y
+
+def gaussianValue(x):
+    a1 = 0.6922/1.0359
+    b1 = 7.752
+    c1 = 148.8
+    a2 = 0.346/1.0359
+    b2 =-13.57
+    c2 = 325.8
+    y = a1*math.exp(-((x-b1)/c1)**2) + a2*math.exp(-((x-b2)/c2)**2)
+
+def gaussianDerivative(x):
+    a1 = 0.6922/1.0359
+    b1 = 7.752
+    c1 = 148.8
+    a2 = 0.346/1.0359
+    b2 =-13.57
+    c2 = 325.8
+    y = -2*a1*((x-b1)/c1**2)*math.exp(-((x-b1)/c1)**2) -2*a2*((x-b2)/c2**2)*math.exp(-((x-b2)/c2)**2)
