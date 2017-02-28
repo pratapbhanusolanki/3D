@@ -64,4 +64,6 @@ slprj/
 .xml
 *.pyc
 *.DS_store
+*.npy
+*.npz
 
