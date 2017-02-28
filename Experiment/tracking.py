@@ -164,6 +164,7 @@ scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
 theta[0] = 30
 
+
 for i in range(1,num_iteration):
 	print i
 	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3]
