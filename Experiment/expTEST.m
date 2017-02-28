@@ -23,7 +23,7 @@ B = [0,0;1,0;0,1];
 
 %Scanning parameters
 angle_bias(1) = 0;
-phi = 20;
+phi = 90;
 scan_radius = 10;
 
 %Initial position parameters
