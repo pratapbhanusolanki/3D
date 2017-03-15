@@ -8,7 +8,7 @@ from servo import Servo
 from stepper import Stepper
 import linalgfunc
 import pdb
-
+import time
 
 global pi
 pi = np.pi
@@ -82,8 +82,8 @@ def initialize():
 	B = np.matrix([[0,0],[1,0],[0,1]])
 
 	global Q
-	Q = np.matrix([[1,0,0],[0,10,0],[0,0,10]])
-	Q = 10*Q
+	Q = np.matrix([[1,0,0],[0,20,0],[0,0,20]])
+	Q = 100*Q
 
 	global R
 	R = np.identity(3)
@@ -118,6 +118,9 @@ def initialize():
 	global K_all
 	K_all = np.zeros((num_iteration,3,3))
 
+	global u_all
+	u_all = np.zeros((num_iteration,3))
+
 
 def getIntensity():
 	total_intensity = 0
@@ -139,8 +142,6 @@ def offLED():
 setup()
 initialize()
 
-
-
 #Variables Initialization
 diff_sum = 0
 x_hat = np.zeros((3,num_iteration))
@@ -148,7 +149,7 @@ x_hat[:,0] = [3,0,0]
 
 angle_bias = np.zeros(num_iteration) 
 phi = 90
-scan_radius = 5#10
+scan_radius = 5
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0
@@ -159,12 +160,13 @@ previous_difference = 0
 previous_measurement = 2
 previous_previous_measurement = 2
 psi = np.zeros(num_iteration)
+timer = np.zeros(num_iteration)
 theta = np.zeros(num_iteration)
 scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
-theta[0] = 30
+theta[0] = 15
 
-
+start = time.time()
 for i in range(1,num_iteration):
 	print i
 	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3]
@@ -197,12 +199,12 @@ for i in range(1,num_iteration):
 	measurement = getIntensity()
 	y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
 	y_all[i,:] = np.transpose(y)
-	print y
+	#print y
 
 	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
 	y_hat_all[i,:] = np.transpose(y_hat)
 	y_hat 
-	print y_hat 
+	#print y_hat 
 	previous_previous_measurement = previous_measurement
 	previous_measurement = measurement
 	
@@ -221,17 +223,22 @@ for i in range(1,num_iteration):
 		x_hat[0,i] = 0
 	x_hat_all[i,:] =x_hat[:,i]
     
-	if(difference + previous_difference < 2):
-		G = 0.2
-		G2 = 0.2
-	else:
-		G = 0.1
-		G2 = 0
-    
- 	G = 0.0    #debugging with no control
+	# if(difference + previous_difference < 2):
+	# 	G = 0.2
+	# 	G2 = 0.2
+	# else:
+	# 	G = 0.0
+	# 	G2 = 0
+	# G = 0
+	# G2 = 0
+	G=0.2
+
 	previous_difference = difference
 	normal_u2 = -G*x_hat[1,i]
 	normal_u3 = -G*x_hat[2,i]
+	u_all[i,:] = [0,normal_u2,normal_u3]
+	print normal_u2 
+	print normal_u3
 	u2 = np.array([[normal_u2], [u2_previous]])
 	u3 = np.array([[normal_u3], [u3_previous]])
 	u2_previous = normal_u2
@@ -262,5 +269,10 @@ for i in range(1,num_iteration):
 
 	myServo.write(Motor_command_servo)
 	myStepper.rotateMotor(Motor_command_stepper)
+	toc = time.time()
+	timer[i] = toc-start
 
-np.savez('data.npz', scan_parameters=scan_parameters, x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all, y_all=y_all, P_all=P_all, K_all=K_all)
+np.savez('data.npz', scan_parameters=scan_parameters, \
+	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
+	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
+	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all)

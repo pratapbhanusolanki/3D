@@ -147,7 +147,7 @@ x_hat = np.zeros((3,num_iteration))
 x_hat[:,0] = [3,0,0]
 
 angle_bias = np.zeros(num_iteration) 
-phi = 90
+phi = 20
 scan_radius = 10#10
 u2_previous = -1.0
 u3_previous = -2.0

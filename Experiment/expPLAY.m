@@ -10,7 +10,7 @@ y_hat_series(1) = 0;
 
 
 %Noise Covariance Matrices and Kalman filter parameters
-Q = 1*[1,0,0;0,1,0;0,0,1;];
+Q = 1*[1,0,0;0,20,0;0,0,20;];
 R = eye(3);
 R_inv = inv(R);
 
@@ -23,8 +23,8 @@ B = [0,0;1,0;0,1];
 
 %Scanning parameters
 angle_bias(1) = 0;
-phi = 20;
-scan_radius = 5;
+phi = 90;
+scan_radius = 10;
 
 %Initial position parameters
 theta(1) = 0;
@@ -56,7 +56,7 @@ normal_u3 = 0;
 
 
 %Reading all the data
-unzip('data.npz','data')
+unzip('data_without_control2.npz','data')
 x_hatf_data = readNPY('data/x_hatf_all.npy');
 x_hat_data = readNPY('data/x_hat_all.npy');
 Pf_data = permute(readNPY('data/Pf_all.npy'),[2,3,1]);
@@ -187,10 +187,11 @@ hold on;
 %plot(x_hat_data(1,1:num_iteration),'r');
 %plot(time,x(1,:),'r');
 plot(time,x_hat_data(:,1));
+plot(time,x_hat_k(1,:));
 %title('Convergence');
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_1$$','Interpreter','Latex');
-legend('Original state','Extended Kalman Filter')
+legend('Experimental Estimate','Simulation Estimate')
 
 subplot(4,1,2);
 hold on;
@@ -199,10 +200,11 @@ hold on;
 %plot(-20*control_data(1:num_iteration),'k');
 %plot(time,x(2,:),'r');
 plot(time,x_hat_data(:,2));
+plot(time,x_hat_k(2,:));
 %ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_2$$','Interpreter','Latex');
-
+legend('Experimental Estimate','Simulation Estimate')
 subplot(4,1,3);
 
 hold on;
@@ -211,10 +213,11 @@ hold on;
 %plot(-20*control_data(1:num_iteration),'k');
 %plot(time,x(3,:),'r');
 plot(time,x_hat_data(:,3));
-ylim([-20,20]);
+plot(time,x_hat_k(3,:));
+%ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_3$$','Interpreter','Latex');
-
+legend('Experimental Estimate','Simulation Estimate')
 subplot(4,1,4);
 hold on;
 %plot(time,x(2,:));
@@ -222,13 +225,14 @@ hold on;
 
 plot(time, y_series,'r');
 %plot(time, measurement_data,'k');
-plot(time, y_hat_series,'b')
-legend('Experimental measurement','Estimated measurement')
+plot(time, y_hat_series,'b');
+plot(time,y_hat_data(:,1));
+legend('Actual Measurement','Experimental Estimate','Simulation Estimate')
 
-ylim([-20,20]);
+%ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{y}$$','Interpreter','Latex');
-ylim([0,10]);
+%ylim([0,10]);
 
 
 
