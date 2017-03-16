@@ -2,7 +2,7 @@ clear all;
 close all;
 clc;
 
-unzip('model_data_step2.npz','model_data')
+unzip('model_data_step3.npz','model_data')
 model_data = readNPY('model_data/model_data.npy');
 figure
 X = readNPY('model_data/psi_data.npy');
@@ -20,7 +20,7 @@ end
 figure
 surf(X,Y,shift_model_data);
 figure
-plot(shift_model_data(11,:));
+plot(shift_model_data(2,:));
 figure
-plot(shift_model_data(:,13));
+plot(shift_model_data(:,201));
 

@@ -57,6 +57,10 @@ def setup():
 	LED = mraa.Gpio(7)  
 	LED.dir(mraa.DIR_OUT) 
 
+	global Light
+	Light = mraa.Gpio(8)  
+	Light.dir(mraa.DIR_OUT) 
+
 	global sensorPin
 	sensorPin = mraa.Aio(5)
 
@@ -82,8 +86,8 @@ def initialize():
 	B = np.matrix([[0,0],[1,0],[0,1]])
 
 	global Q
-	Q = np.matrix([[1,0,0],[0,20,0],[0,0,20]])
-	Q = 100*Q
+	Q = np.matrix([[1,0,0],[0,10,0],[0,0,10]])
+	Q = 0.01*Q
 
 	global R
 	R = np.identity(3)
@@ -138,6 +142,12 @@ def onLED():
 def offLED():
 	LED.write(0)
 
+def onLights():
+	Light.write(0)
+
+def offLights():
+	Light.write(1)
+
 #Main function execution starts here
 setup()
 initialize()
@@ -164,8 +174,8 @@ timer = np.zeros(num_iteration)
 theta = np.zeros(num_iteration)
 scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
-theta[0] = 15
-
+theta[0] = 10
+onLights()
 start = time.time()
 for i in range(1,num_iteration):
 	print i
@@ -253,7 +263,7 @@ for i in range(1,num_iteration):
 	# x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
     
 	theta_offset_temp,psi_offset = angle_transform(alpha_bias, beta_bias, theta[i])
-	theta_offset = theta_offset_temp-theta[i]
+	theta_offset = theta_offset_temp - theta[i]
    
 	scan_psi[i] = psi[i] + psi_offset
 	scan_theta[i] = theta[i] + theta_offset
@@ -276,3 +286,5 @@ np.savez('data.npz', scan_parameters=scan_parameters, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
 	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
 	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all)
+
+offLights()

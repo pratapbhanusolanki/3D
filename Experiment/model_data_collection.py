@@ -105,12 +105,12 @@ initialize()
 #Variables Initialization
 
 onLights()
-b1 = 10  #length of Servo scan
+b1 = 1  #length of Servo scan
 l1 = 2*b1+1
-b2 = 11  #length of Stepper scan
+b2 = 120  #length of Stepper scan
 l2 = 2*b2+1
 theta_step = 3
-psi_step = 3
+psi_step = 0.5
 model_data = np.zeros((l1,l2))
 psi_data = np.zeros((l1,l2))
 theta_data = np.zeros((l1,l2))
@@ -130,7 +130,7 @@ for i in range(0,l1-1):
 		theta_data[i,k] = theta
 		psi_data[i,k] = psi
 		print [theta,psi]
-		time.sleep(0.500)
+		time.sleep(0.200)
 		model_data[i,j] = getIntensity()
 		print model_data[i,j]
 		myStepper.rotateMotor(rotation*psi_step)  #Note that the command is incremental
@@ -146,7 +146,7 @@ for i in range(0,l1-1):
 	theta = theta+3*theta_step
 	myServo.write(theta)
 	time.sleep(2)
-np.savez('model_data_step2.npz', model_data= model_data, psi_data = psi_data,theta_data = theta_data)
+np.savez('model_data_step3.npz', model_data= model_data, psi_data = psi_data,theta_data = theta_data)
 offLights()
 myStepper.rotateMotor(-psi)
 myServo.write(0)

@@ -56,7 +56,7 @@ normal_u3 = 0;
 
 
 %Reading all the data
-unzip('data_without_control2.npz','data')
+unzip('data.npz','data')
 x_hatf_data = readNPY('data/x_hatf_all.npy');
 x_hat_data = readNPY('data/x_hat_all.npy');
 Pf_data = permute(readNPY('data/Pf_all.npy'),[2,3,1]);
