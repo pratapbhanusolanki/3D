@@ -70,7 +70,7 @@ def setup():
 	global myServo
 	myServo = Servo()
 	myServo.attach(9)
-	myServo.write(30)
+	myServo.write(0)
 
 def initialize():
 	global num_iteration
@@ -87,7 +87,7 @@ def initialize():
 
 	global Q
 	Q = np.matrix([[1,0,0],[0,10,0],[0,0,10]])
-	Q = 0.01*Q
+	Q = 0.1*Q
 
 	global R
 	R = np.identity(3)
@@ -97,6 +97,9 @@ def initialize():
 
 	global scan_parameters_all
 	scan_parameters_all = np.zeros((num_iteration,3))
+
+	global previous_u_all
+	previous_u_all = np.zeros((num_iteration,2,2))
 
 	global x_hatf_all
 	x_hatf_all = np.zeros((num_iteration,3))
@@ -156,10 +159,10 @@ initialize()
 diff_sum = 0
 x_hat = np.zeros((3,num_iteration))
 x_hat[:,0] = [3,0,0]
-
+x_hatf_all[0,:] = x_hat[:,0]
 angle_bias = np.zeros(num_iteration) 
 phi = 90
-scan_radius = 5
+scan_radius = 7
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0
@@ -175,7 +178,10 @@ theta = np.zeros(num_iteration)
 scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
 theta[0] = 10
+scan_theta[0] = theta[0]
+myServo.write(theta[0])
 onLights()
+time.sleep(1)
 start = time.time()
 for i in range(1,num_iteration):
 	print i
@@ -193,11 +199,13 @@ for i in range(1,num_iteration):
 	beta_diff = beta_bias - previous_beta_bias
     
 	previous_u = np.array([u2,u3])
+	previous_u_all[i,:,:] = previous_u.T
 	#print previous_u
 	scan_parameters = [scan_radius, bias, phi]
+	scan_parameters_all[i,:] = scan_parameters
 	#print scan_parameters
     
-	scan_parameters_all[i,:] = scan_parameters
+	
 	C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
 	C_all[i,:,:] = C
 	#print C
@@ -231,17 +239,18 @@ for i in range(1,num_iteration):
 	
 	if x_hat[0,i] < 0:
 		x_hat[0,i] = 0
-	x_hat_all[i,:] =x_hat[:,i]
+	x_hat_all[i,:] = x_hat[:,i]
     
-	# if(difference + previous_difference < 2):
-	# 	G = 0.2
-	# 	G2 = 0.2
-	# else:
-	# 	G = 0.0
-	# 	G2 = 0
-	# G = 0
+	if(difference + previous_difference < 1):
+		G = 0.5
+		G2 = 0.2
+	else:
+		G = 0.0
+		G2 = 0
+
+	#G = 0.2
 	# G2 = 0
-	G=0.2
+	# G=0.2
 
 	previous_difference = difference
 	normal_u2 = -G*x_hat[1,i]
@@ -282,9 +291,9 @@ for i in range(1,num_iteration):
 	toc = time.time()
 	timer[i] = toc-start
 
-np.savez('data.npz', scan_parameters=scan_parameters, \
+np.savez('data.npz', scan_parameters_all=scan_parameters_all, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
 	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
-	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all)
-
+	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all,\
+	scan_psi_all=scan_psi,scan_theta_all=scan_theta, previous_u_all=previous_u_all)
 offLights()

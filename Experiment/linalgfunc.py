@@ -42,7 +42,7 @@ def get_C_matrix(x,previous_u,scan_parameters):
     C = np.zeros((3,3))
     u2 = previous_u[0,:]
     u3 = previous_u[1,:]
-    
+    pdb.set_trace()
     scan_radius = scan_parameters[0]
     bias = scan_parameters[1]
     phi = scan_parameters[2]
@@ -100,13 +100,12 @@ def get_output_array(x,previous_u,scan_parameters):
 
 #Gives Fitting Gaussian data from the module 
 def g(x):
-    a1 =      0.6922/1.0359
-    b1 =       7.752
-    c1 =     148.8
-    a2 =       0.346/1.0359
-    b2 =      -13.57
-    c2 =       325.8
-    x = x*18
+    a1 = 0.6972
+    b1 = -0.04401
+    c1 = 10.11
+    a2 = 0.3028
+    b2 = 0.05681
+    c2 = 25.19
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
     y=a1*np.exp(-arg1) + a2*np.exp(-arg2)
@@ -114,33 +113,33 @@ def g(x):
 
 #computes the derivative of the gaussian function y = g_d(x)
 def g_d(x):
-    a1 =      0.6922/1.0359
-    b1 =       7.752
-    c1 =     148.8
-    a2 =       0.346/1.0359
-    b2 =      -13.57
-    c2 =       325.8
-    x = x*18
+    a1 = 0.6972
+    b1 = -0.04401
+    c1 = 10.11
+    a2 = 0.3028
+    b2 = 0.05681
+    c2 = 25.19
+
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
     y = -2*a1*((x-b1)/(c1*c1))*np.exp(-arg1) -2*a2*((x-b2)/(c2*c2))*np.exp(-arg2)
-    y = 18*y
+
     return y
 
 def gaussianValue(x):
-    a1 = 0.6922/1.0359
-    b1 = 7.752
-    c1 = 148.8
-    a2 = 0.346/1.0359
-    b2 =-13.57
-    c2 = 325.8
+    a1 = 0.6972
+    b1 = -0.04401
+    c1 = 10.11
+    a2 = 0.3028
+    b2 = 0.05681
+    c2 = 25.19
     y = a1*math.exp(-((x-b1)/c1)**2) + a2*math.exp(-((x-b2)/c2)**2)
 
 def gaussianDerivative(x):
-    a1 = 0.6922/1.0359
-    b1 = 7.752
-    c1 = 148.8
-    a2 = 0.346/1.0359
-    b2 =-13.57
-    c2 = 325.8
+    a1 = 0.6972
+    b1 = -0.04401
+    c1 = 10.11
+    a2 = 0.3028
+    b2 = 0.05681
+    c2 = 25.19
     y = -2*a1*((x-b1)/c1**2)*math.exp(-((x-b1)/c1)**2) -2*a2*((x-b2)/c2**2)*math.exp(-((x-b2)/c2)**2)

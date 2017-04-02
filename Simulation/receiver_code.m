@@ -8,7 +8,7 @@ clc;
 angle_bias(1) = 0;
 bias = angle_bias(1);
 phi = 20;
-scan_radius = 10;
+scan_radius = 50;%10;
 r_source = 1.2;
 
 
@@ -140,7 +140,7 @@ for i=2:num_iteration
     normal_u3 = -G*x_hat_k(3,i);
     
     u2 = [normal_u2; u2_previous];
-    u3 = [normal_u2; u3_previous];
+    u3 = [normal_u3; u3_previous];
     x_hat_k(:,i) = x_hat_k(:,i)+ [0; normal_u2;normal_u3];
 
     u2_previous = normal_u2;
@@ -176,7 +176,7 @@ for i=2:num_iteration
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    plot3(xp(i),yp(i),zp(i),'yo','MarkerFaceColor','y');
+    plot3(xp(i),yp(i),zp(i),'yo','MarkerFaceColor','b');
     plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
     plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
     %drawnow;

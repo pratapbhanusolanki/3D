@@ -10,7 +10,7 @@ y_hat_series(1) = 0;
 
 
 %Noise Covariance Matrices and Kalman filter parameters
-Q = 1*[1,0,0;0,20,0;0,0,20;];
+Q = 1*[1,0,0;0,10,0;0,0,10;];
 R = eye(3);
 R_inv = inv(R);
 
@@ -24,14 +24,14 @@ B = [0,0;1,0;0,1];
 %Scanning parameters
 angle_bias(1) = 0;
 phi = 90;
-scan_radius = 10;
+scan_radius = 7;
 
 %Initial position parameters
-theta(1) = 0;
+theta(1) = 10;
 psi(1) = 0;
 
-scan_theta(1) = 45;
-scan_psi(1) = -110;
+scan_theta(1) = 0;
+scan_psi(1) = 0;
 
 %Previous values needed for initialisation
 u2_previous = -1.0;
@@ -52,15 +52,13 @@ normal_u2 = 0;
 normal_u3 = 0;
 
 
-
-
-
 %Reading all the data
 unzip('data.npz','data')
 x_hatf_data = readNPY('data/x_hatf_all.npy');
 x_hat_data = readNPY('data/x_hat_all.npy');
 Pf_data = permute(readNPY('data/Pf_all.npy'),[2,3,1]);
 P_data = permute(readNPY('data/P_all.npy'),[2,3,1]);
+previous_u_data = permute(readNPY('data/previous_u_all.npy'),[2,3,1]);
 y_data = readNPY('data/y_all.npy');
 y_hat_data = readNPY('data/y_hat_all.npy');
 C_data = permute(readNPY('data/C_all.npy'),[2,3,1]);
@@ -90,7 +88,8 @@ for i=2:num_iteration
     alpha_diff = alpha_bias - previous_alpha_bias;
     beta_diff = beta_bias - previous_beta_bias; 
     
-    previous_u = [u2,u3];
+    previous_u = [u2,u3]
+    previous_u_data(:,:,i)
     scan_parameters = [scan_radius, bias, phi];
     
     C = get_C_matrix(x_hat_k(:,i),previous_u,scan_parameters)
@@ -106,7 +105,7 @@ for i=2:num_iteration
     y = [measurement;previous_measurement; previous_previous_measurement]
     dum = y_data(i,:)'
     
-    y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters)
+    y_hat = get_output_array(x_hat_k(:,i), previous_u,scan_parameters)
     dum = y_hat_data(i,:)'
     
     y_hat_series(i) = y_hat(1);
@@ -120,7 +119,7 @@ for i=2:num_iteration
     K = P_current*C'*inv(C*P_current*C' + R)
     dum = K_data(:,:,i)
     
-    x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
+    x_hat_k(:,i) = x_hat_k(:,i)+K*(y-y_hat);
     dumS = x_hat_k(:,i)'
     dumE = x_hat_data(i,:)
     P(:,:,i) = (eye(3) - K*C)*P_current;
@@ -138,11 +137,11 @@ for i=2:num_iteration
         G = 0.2;
         G2 = 0.2;
     else
-        G = 0.1;
+        G = 0.0;
         G2 = 0;
     end
     
-    G = 0.0;
+    %G = 0.2;
     previous_difference = difference;
     
     normal_u2 = -G*x_hat_k(2,i);
