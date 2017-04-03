@@ -53,10 +53,6 @@ def angle_transform(alpha,beta,theta):
     return (alpha_prime,beta_prime)
 
 def setup():
-	global LED
-	LED = mraa.Gpio(7)  
-	LED.dir(mraa.DIR_OUT) 
-
 	global Light
 	Light = mraa.Gpio(8)  
 	Light.dir(mraa.DIR_OUT) 
@@ -64,13 +60,11 @@ def setup():
 	global sensorPin
 	sensorPin = mraa.Aio(5)
 
-	global myStepper
-	myStepper = Stepper()
+	global BaseStepper
+	BaseStepper = Stepper(7,6,2)
 
-	global myServo
-	myServo = Servo()
-	myServo.attach(9)
-	myServo.write(0)
+	global ReceiverStepper
+	ReceiverStepper = Stepper(10,11,9)
 
 def initialize():
 	global num_iteration
@@ -179,117 +173,116 @@ scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
 theta[0] = 10
 scan_theta[0] = theta[0]
-myServo.write(theta[0])
 onLights()
 time.sleep(1)
 start = time.time()
-for i in range(1,num_iteration):
-	print i
-	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3]
-	x_hatf_all[i,:] = x_hat_k
+# for i in range(1,num_iteration):
+# 	print i
+# 	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3]
+# 	x_hatf_all[i,:] = x_hat_k
 
-	angle_bias[i] = angle_bias[i-1] + phi
-	bias = angle_bias[i]
-	previous_alpha_bias = scan_radius*sind(bias-phi)
-	previous_beta_bias = scan_radius*cosd(bias-phi)
-	alpha_bias = scan_radius*sind(bias)
-	beta_bias = scan_radius*cosd(bias)
+# 	angle_bias[i] = angle_bias[i-1] + phi
+# 	bias = angle_bias[i]
+# 	previous_alpha_bias = scan_radius*sind(bias-phi)
+# 	previous_beta_bias = scan_radius*cosd(bias-phi)
+# 	alpha_bias = scan_radius*sind(bias)
+# 	beta_bias = scan_radius*cosd(bias)
     
-	alpha_diff = alpha_bias - previous_alpha_bias
-	beta_diff = beta_bias - previous_beta_bias
+# 	alpha_diff = alpha_bias - previous_alpha_bias
+# 	beta_diff = beta_bias - previous_beta_bias
     
-	previous_u = np.array([u2,u3])
-	previous_u_all[i,:,:] = previous_u.T
-	#print previous_u
-	scan_parameters = [scan_radius, bias, phi]
-	scan_parameters_all[i,:] = scan_parameters
-	#print scan_parameters
+# 	previous_u = np.array([u2,u3])
+# 	previous_u_all[i,:,:] = previous_u.T
+# 	#print previous_u
+# 	scan_parameters = [scan_radius, bias, phi]
+# 	scan_parameters_all[i,:] = scan_parameters
+# 	#print scan_parameters
     
 	
-	C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
-	C_all[i,:,:] = C
-	#print C
+# 	C = linalgfunc.get_C_matrix(x_hat_k,previous_u,scan_parameters)
+# 	C_all[i,:,:] = C
+# 	#print C
 
-	P_current = A*P_current*A + Q
-	Pf_all[i,:,:] = P_current
-	#print P_current
-    #Output Calculation
-	measurement = getIntensity()
-	y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
-	y_all[i,:] = np.transpose(y)
-	#print y
+# 	P_current = A*P_current*A + Q
+# 	Pf_all[i,:,:] = P_current
+# 	#print P_current
+#     #Output Calculation
+# 	measurement = getIntensity()
+# 	y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
+# 	y_all[i,:] = np.transpose(y)
+# 	#print y
 
-	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
-	y_hat_all[i,:] = np.transpose(y_hat)
-	y_hat 
-	#print y_hat 
-	previous_previous_measurement = previous_measurement
-	previous_measurement = measurement
+# 	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
+# 	y_hat_all[i,:] = np.transpose(y_hat)
+# 	y_hat 
+# 	#print y_hat 
+# 	previous_previous_measurement = previous_measurement
+# 	previous_measurement = measurement
 	
-	#Filtering    
-	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
-	K_all[i,:,:] = K
+# 	#Filtering    
+# 	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
+# 	K_all[i,:,:] = K
 
-	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
-	P_current = (np.identity(3) - K*C)*P_current
-	P_all[i,:,:] = P_current
+# 	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
+# 	P_current = (np.identity(3) - K*C)*P_current
+# 	P_all[i,:,:] = P_current
 
-	difference = abs(y[0]-y_hat[0])
-	diff_sum = diff_sum + difference
+# 	difference = abs(y[0]-y_hat[0])
+# 	diff_sum = diff_sum + difference
 	
-	if x_hat[0,i] < 0:
-		x_hat[0,i] = 0
-	x_hat_all[i,:] = x_hat[:,i]
+# 	if x_hat[0,i] < 0:
+# 		x_hat[0,i] = 0
+# 	x_hat_all[i,:] = x_hat[:,i]
     
-	if(difference + previous_difference < 1):
-		G = 0.5
-		G2 = 0.2
-	else:
-		G = 0.0
-		G2 = 0
+# 	if(difference + previous_difference < 1):
+# 		G = 0.5
+# 		G2 = 0.2
+# 	else:
+# 		G = 0.0
+# 		G2 = 0
 
-	#G = 0.2
-	# G2 = 0
-	# G=0.2
+# 	#G = 0.2
+# 	# G2 = 0
+# 	# G=0.2
 
-	previous_difference = difference
-	normal_u2 = -G*x_hat[1,i]
-	normal_u3 = -G*x_hat[2,i]
-	u_all[i,:] = [0,normal_u2,normal_u3]
-	print normal_u2 
-	print normal_u3
-	u2 = np.array([[normal_u2], [u2_previous]])
-	u3 = np.array([[normal_u3], [u3_previous]])
-	u2_previous = normal_u2
-	u3_previous = normal_u3
-	# normal_u3 = 0
-	# normal_u2 = 0
+# 	previous_difference = difference
+# 	normal_u2 = -G*x_hat[1,i]
+# 	normal_u3 = -G*x_hat[2,i]
+# 	u_all[i,:] = [0,normal_u2,normal_u3]
+# 	print normal_u2 
+# 	print normal_u3
+# 	u2 = np.array([[normal_u2], [u2_previous]])
+# 	u3 = np.array([[normal_u3], [u3_previous]])
+# 	u2_previous = normal_u2
+# 	u3_previous = normal_u3
+# 	# normal_u3 = 0
+# 	# normal_u2 = 0
 
-	dummy_u3,u2_k = angle_transform(normal_u3, normal_u2, theta[i-1])
-	u3_k = dummy_u3 - theta[i-1]
-	psi[i] = psi[i-1] + u2_k
-	theta[i] = theta[i-1] + u3_k
-	# x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
+# 	dummy_u3,u2_k = angle_transform(normal_u3, normal_u2, theta[i-1])
+# 	u3_k = dummy_u3 - theta[i-1]
+# 	psi[i] = psi[i-1] + u2_k
+# 	theta[i] = theta[i-1] + u3_k
+# 	# x_hat[:,i] = x_hat[:,i] + [0,normal_u2,normal_u3]
     
-	theta_offset_temp,psi_offset = angle_transform(alpha_bias, beta_bias, theta[i])
-	theta_offset = theta_offset_temp - theta[i]
+# 	theta_offset_temp,psi_offset = angle_transform(alpha_bias, beta_bias, theta[i])
+# 	theta_offset = theta_offset_temp - theta[i]
    
-	scan_psi[i] = psi[i] + psi_offset
-	scan_theta[i] = theta[i] + theta_offset
+# 	scan_psi[i] = psi[i] + psi_offset
+# 	scan_theta[i] = theta[i] + theta_offset
 
-    # u2 = np.array([[normal_u2], [u2_previous]])
-	# u3 = np.array([[normal_u3], [u3_previous]])
+#     # u2 = np.array([[normal_u2], [u2_previous]])
+# 	# u3 = np.array([[normal_u3], [u3_previous]])
 
-	# u2_previous = normal_u2
-	# u3_previous = normal_u3
+# 	# u2_previous = normal_u2
+# 	# u3_previous = normal_u3
 
-	Motor_command_stepper = scan_psi[i] - scan_psi[i-1]
-	Motor_command_servo = scan_theta[i]     #For servo it is the absolute value, which matters, not the difference with previous one
+# 	Motor_command_base = scan_psi[i] - scan_psi[i-1]
+# 	Motor_command_receiver = scan_theta[i] - scan_theta[i-1]
 
-	myServo.write(Motor_command_servo)
-	myStepper.rotateMotor(Motor_command_stepper)
-	toc = time.time()
-	timer[i] = toc-start
+# 	BaseStepper.rotateMotor(Motor_command_base)
+# 	ReceiverStepper.rotateMotor(Motor_command_receiver)
+# 	toc = time.time()
+# 	timer[i] = toc-start
 
 np.savez('data.npz', scan_parameters_all=scan_parameters_all, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\

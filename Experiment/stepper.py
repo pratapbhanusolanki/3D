@@ -5,10 +5,10 @@ def usleep(x):
 	time.sleep(x/1000000.0)
 
 class Stepper:
-	def __init__(self):
-		self.step = mraa.Gpio(6)
+	def __init__(self,pindir,pinstep,pinenable):
+		self.step = mraa.Gpio(pinstep)
 		self.step.dir(mraa.DIR_OUT)
-		self.direction = mraa.Gpio(7)
+		self.direction = mraa.Gpio(pindir)
 		self.direction.dir(mraa.DIR_OUT)
 		self.MS1 = mraa.Gpio(3)
 		self.MS1.dir(mraa.DIR_OUT)
@@ -16,7 +16,7 @@ class Stepper:
 		self.MS2.dir(mraa.DIR_OUT)
 		self.MS3 = mraa.Gpio(5)
 		self.MS3.dir(mraa.DIR_OUT)
-		self.enable = mraa.Gpio(2)
+		self.enable = mraa.Gpio(pinenable)
 		self.enable.dir(mraa.DIR_OUT)
 		self.resetPins()
 
