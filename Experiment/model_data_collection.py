@@ -64,13 +64,11 @@ def setup():
 	global sensorPin
 	sensorPin = mraa.Aio(5)
 
-	global myStepper
-	myStepper = Stepper()
+	global BaseStepper
+	BaseStepper = Stepper(7,6,2)
 
-	global myServo
-	myServo = Servo()
-	myServo.attach(9)
-	myServo.write(30)
+	global ReceiverStepper
+	ReceiverStepper = Stepper(10,11,9)
 
 def initialize():
 	global num_iteration
@@ -105,64 +103,52 @@ initialize()
 #Variables Initialization
 
 onLights()
-b1 = 12  #length of Servo scan
-l1 = 2*b1+1
-b2 = 150  #length of Stepper scan
-l2 = 2*b2+1
-theta_step = 5
-psi_step = 0.5
-#model_data = np.zeros((l1,l2))
-model_data = np.zeros(l1)
-psi_data = np.zeros((l1,l2))
-#theta_data = np.zeros((l1,l2))
-theta_data = np.zeros(l1)
-theta = -theta_step*(b1) 
-myServo.write(theta)
+b = 30  #length of Stepper scan
+l = 2*b+1
+theta_step = 1
+psi_step = 1
+model_data = np.zeros((l,l))
+#model_data = np.zeros(l1)
+psi_data = np.zeros((l,l))
+theta_data = np.zeros((l,l))
+#theta_data = np.zeros(l1)
+theta = -theta_step*(b) 
+ReceiverStepper.rotateMotor(-theta)
 time.sleep(1)
 
-psi = -psi_step*(b2) 
-#myStepper.rotateMotor(psi)
+psi = -psi_step*(b) 
+BaseStepper.rotateMotor(psi)
 time.sleep(1)
 
-myServo.write(0)
+
 rotation = 1
 k = 0
-#for i in range(0,l1-1):
 i=0
-# for j in range(0,l2-1):
-# 	theta_data[i,k] = theta
-# 	psi_data[i,k] = psi
-# 	print [theta,psi]
-# 	time.sleep(0.500)
-# 	model_data[i,j] = getIntensity()
-# 	print model_data[i,j]
-# 	myStepper.rotateMotor(rotation*psi_step)  #Note that the command is incremental
-# 	psi = psi + rotation*psi_step
-# 	k = k + rotation
+for i in range(0,l-1):
+	for j in range(0,l-1):
+		theta_data[i,k] = theta
+		psi_data[i,k] = psi
+		print [theta,psi]
+		time.sleep(0.500)
+		model_data[i,j] = getIntensity()
+		print model_data[i,j]
+		ReceiverStepper.rotateMotor(-rotation*theta_step)  #Note that the command is incremental
+		theta = theta + rotation*theta_step
+		k = k + rotation
+	time.sleep(0.500)
+	rotation = -rotation
+	#Compensating the last step
+	ReceiverStepper.rotateMotor(-rotation*theta_step)  #Note that the command is incremental
+	theta = theta + rotation*theta_step
+	BaseStepper.rotateMotor(psi_step)
+	psi = psi + psi_step
 
-# rotation = -rotation
-# myStepper.rotateMotor(rotation*psi)
-# # psi = psi + rotation*psi_step
-# # k = k + rotation
-# # theta = theta -2*theta_step
-# # myServo.write(theta)
-# # time.sleep(2)
-# # theta = theta+3*theta_step
-# # myServo.write(theta)
-# # time.sleep(2)
-# np.savez('model_data_step3.npz', model_data= model_data, psi_data = psi_data,theta_data = theta_data)
-# offLights()
-# myStepper.rotateMotor(-psi)
-# myServo.write(0)
 
-theta = -theta_step*(b1) 
-myServo.write(theta)
-for i in range(0,l1-1):
-	theta_data[i] = theta
-	model_data[i] = getIntensity()
-	theta = theta + theta_step
-	myServo.write(theta)
-	time.sleep(1)
+
+np.savez('model_data_step3.npz', model_data= model_data, psi_data = psi_data,theta_data = theta_data)
+offLights()
+myStepper.rotateMotor(-psi)
+myServo.write(0)
 
 offLights()
 np.savez('servo_data.npz', theta_data = theta_data,model_data = model_data)
