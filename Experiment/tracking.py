@@ -6,9 +6,9 @@ import math
 import scipy as sio
 from servo import Servo 
 from stepper import Stepper
+import stepper
 import linalgfunc
 import pdb
-import time
 
 global pi
 pi = np.pi
@@ -61,10 +61,10 @@ def setup():
 	sensorPin = mraa.Aio(5)
 
 	global BaseStepper
-	BaseStepper = Stepper(7,6,2)
+	BaseStepper = Stepper(7,6,2,'sixteenth_step')
 
 	global ReceiverStepper
-	ReceiverStepper = Stepper(10,11,9)
+	ReceiverStepper = Stepper(10,11,9,'sixteenth_step')
 
 def initialize():
 	global num_iteration
@@ -122,6 +122,9 @@ def initialize():
 	global u_all
 	u_all = np.zeros((num_iteration,3))
 
+	global motor_commands_all
+	motor_commands_all = np.zeros((num_iteration,2))
+
 
 def getIntensity():
 	total_intensity = 0
@@ -156,7 +159,7 @@ x_hat[:,0] = [3,0,0]
 x_hatf_all[0,:] = x_hat[:,0]
 angle_bias = np.zeros(num_iteration) 
 phi = 30
-scan_radius = 10
+scan_radius = 20
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0
@@ -236,7 +239,7 @@ for i in range(1,num_iteration):
 	x_hat_all[i,:] = x_hat[:,i]
     
 	if(difference + previous_difference < 1):
-		G = 0.5
+		G = 0.2
 		G2 = 0.2
 	else:
 		G = 0.0
@@ -250,8 +253,7 @@ for i in range(1,num_iteration):
 	normal_u2 = -G*x_hat[1,i]
 	normal_u3 = -G*x_hat[2,i]
 	u_all[i,:] = [0,normal_u2,normal_u3]
-	print normal_u2 
-	print normal_u3
+	
 	u2 = np.array([[normal_u2], [u2_previous]])
 	u3 = np.array([[normal_u3], [u3_previous]])
 	u2_previous = normal_u2
@@ -279,16 +281,23 @@ for i in range(1,num_iteration):
 
 	Motor_command_base = scan_psi[i] - scan_psi[i-1]
 	Motor_command_receiver = scan_theta[i] - scan_theta[i-1]
-
+	#Motor_command_receiver = 0
+	print Motor_command_base 
+	print -Motor_command_receiver
+	motor_commands_all[i,0] = Motor_command_base
+	motor_commands_all[i,1] = Motor_command_receiver
 	BaseStepper.rotateMotor(Motor_command_base)
 	ReceiverStepper.rotateMotor(-Motor_command_receiver)
 	toc = time.time()
 	timer[i] = toc-start
-	raw_input("Press Enter to continue...")
+	#raw_input("Press Enter to continue...")
+	#time.sleep(0.5)
 
 np.savez('data.npz', scan_parameters_all=scan_parameters_all, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
 	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
 	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all,\
-	scan_psi_all=scan_psi,scan_theta_all=scan_theta, previous_u_all=previous_u_all)
+	scan_psi_all=scan_psi,scan_theta_all=scan_theta, previous_u_all=previous_u_all,\
+	motor_commands_all=motor_commands_all)
 offLights()
+

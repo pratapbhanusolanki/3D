@@ -3,12 +3,12 @@
 clear all;
 close all;
 clc;
-
+%rng();
 %Scanning parameters
 angle_bias(1) = 0;
 bias = angle_bias(1);
 phi = 20;
-scan_radius = 20;%10;
+
 r_source = 1;
 
 
@@ -17,24 +17,11 @@ theta(1) = 45;
 psi(1) = 45;
 my_pos(:,1) = [0;psi(1);theta(1)]; %first entry is considered zero so as to manage the intensity term
 
-scan_theta(1) = theta(1) + scan_radius*sind(bias);
-scan_psi(1) = psi(1) + scan_radius*cosd(bias);
-i=1;
-xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
-    yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
-    zp(i) = sind(scan_theta(i));
-
-actual_position(:,1) = [-4,55,55]'; % -4 so as to keep x1 positive 
-
-x(:,1) = my_pos(:,1)-actual_position(:,1);
-x_hat_k(:,1) = [3,0,0]';
-
-y_hat_series(1) = 0;
 
 
 
 %Noise Covariance Matrices and Kalman filter parameters
-Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
+Q_system = 0.1*[1,0,0;0,10,0;0,0,10];
 Q = 0.1*[1,0,0;0,10,0;0,0,10;];
 R = eye(3);
 R_inv = inv(R);
@@ -47,44 +34,62 @@ P_current = P(:,:,1);
 A = eye(3);
 B = [0,0;1,0;0,1];
 
-%Previous values needed for initialisation
-u2_previous = 0.1;
-u3_previous = 0.1;
-
-u2_k = 0.0;
-u3_k = 0.0;
-
-u2 = [u2_k; u2_previous];
-u3 = [u3_k; u3_previous];
-
-previous_measurement = 0;
-previous_previous_measurement = 0;
-
-diff_sum = 0;
-previous_difference = 0;
-normal_u2 = 0;
-normal_u3 = 0;
 
 
-num_iteration = 200;
-
-[X,Y] = meshgrid(-1:0.01:1);
-Z = real(sqrt(1-X.*X - Y.*Y));
-hFig = figure;
-set(hFig, 'Position', [680 678 1400 1050])
+scan_radii = 5*(1:6);
+%hFig = figure;
+%set(hFig, 'Position', [680 678 1400 1050])
 %surf(X,Y,real(Z));
-frame(1) = getframe;
+num_iteration = 200;
 hold on;
-for i=2:num_iteration
+noise_process = [normrnd(zeros(1,num_iteration),Q_system(1,1));normrnd(zeros(1,num_iteration),Q_system(2,2));normrnd(zeros(1,num_iteration),Q_system(3,3));];
+noise_measurement = normrnd(zeros(num_iteration,1),R_system(1,1));
+for ir=1:length(scan_radii)
+    scan_radius = scan_radii(ir)
+    %Previous values needed for initialisation
+
+    scan_theta(1) = theta(1) + scan_radius*sind(bias);
+    scan_psi(1) = psi(1) + scan_radius*cosd(bias);
+    i=1;
+    xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
+    yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
+    zp(i) = sind(scan_theta(i));
+
+    actual_position(:,1) = [-4,10,10]'; % -4 so as to keep x1 positive 
+
+    x(:,1) = my_pos(:,1)-actual_position(:,1);
+    x_hat_k(:,1) = [3,0,0]';
+
+    y_hat_series(1) = 0;
+
+    u2_previous = 0.1;
+    u3_previous = 0.1;
+
+    u2_k = 0.0;
+    u3_k = 0.0;
+
+    u2 = [u2_k; u2_previous];
+    u3 = [u3_k; u3_previous];
+
+    previous_measurement = 0;
+    previous_previous_measurement = 0;
+
+    diff_sum = 0;
+    previous_difference = 0;
+    normal_u2 = 0;
+    normal_u3 = 0;
+
+
+    
+    for i=2:num_iteration
     i
 	tic;
-	actual_position(:,i) = actual_position(:,i-1)+ 0.08*[0; 1;1] + [normrnd(0,Q_system(1,1)); normrnd(0,Q_system(2,2));normrnd(0,Q_system(3,3))];
+	actual_position(:,i) = actual_position(:,i-1)+ 0.08*[0; 1;1] + noise_process(:,i);
     my_pos(:,i) = my_pos(:,i-1)  + [0;u2_k;u3_k];
     x1 = my_pos(1,i)-actual_position(1,i);
     x2_temp = my_pos(2,i)-actual_position(2,i);
     [x3,x2] = angle_transform(my_pos(3,i), x2_temp, -actual_position(3,i));
 	%theta(i) = theta(i-1) + u3_k;
-    
 	x1_hat_k = x_hat_k(1,i-1);
     x2_hat_k = x_hat_k(2,i-1);
     x3_hat_k = x_hat_k(3,i-1);
@@ -106,7 +111,7 @@ for i=2:num_iteration
     P_current = A*P_current*A' + Q;
     
     % Output calculation
-    measurement = exact_measurement_model(x1,x2 + beta_bias,x3 + alpha_bias) + normrnd(0,R_system(1,1));
+    measurement = exact_measurement_model(x1,x2 + beta_bias,x3 + alpha_bias) + noise_measurement(i);
     y = [measurement;previous_measurement; previous_previous_measurement];
     y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters);
     y_hat_series(i) = y_hat(1); 
@@ -117,11 +122,14 @@ for i=2:num_iteration
 
     % Filtering    
     K = P_current*C'*inv(C*P_current*C' + R);
+    K_norm(ir,i) = norm(K);
     x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
     P(:,:,i) = (eye(3) - K*C)*P_current;
     P_current = P(:,:,i);
-
+    P_norm(ir,i) = norm(P_current);
+    x_sum(ir,i) = sum(x_hat_k(:,i)-x(:,i));
     difference = abs(y(1)-y_hat(1));
+    diff(ir,i) = difference;
     diff_sum = diff_sum + difference;
     
     if x_hat_k(1,i) < 0
@@ -131,12 +139,12 @@ for i=2:num_iteration
     if(difference + previous_difference < 1)
         G = 1
         G2 = 0.2;
-        scan_radius = 4
+        %scan_radius = 4
     else
         G = 0.2
         G2 = 0;
     end
-    
+    %G = 0;
     %G = 0.0;
     previous_difference = difference;
     
@@ -180,84 +188,24 @@ for i=2:num_iteration
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
-    if i > 3
-        h1 = plot3([xp(i-1) xp(i)],[yp(i-1) yp(i)], [zp(i-1) zp(i)],'-bo','MarkerFaceColor','b');
-    end
-    h2 = plot3([ xa],[ ya],[0 za],'r*','MarkerFaceColor','r','LineWidth',2);
-    h3 = plot3([0 xe],[0 ye],[0 ze],':go','MarkerFaceColor','g','LineWidth',1);
+%     if i > 3
+%         h1 = plot3([xp(i-1) xp(i)],[yp(i-1) yp(i)], [zp(i-1) zp(i)],'-bo','MarkerFaceColor','b');
+%     end
+%     h2 = plot3([0 xa],[0 ya],[0 za],'-ro','MarkerFaceColor','r','LineWidth',2);
+%     h3 = plot3([0 xe],[0 ye],[0 ze],'--go','MarkerFaceColor','g','LineWidth',1);
     %drawnow;
-    frame(i) = getframe;
+    
     t(i) = toc;
+    end
+plot(P_norm(ir,:));
+legendInfo{ir} = ['r = ',num2str(scan_radius)]; % or whatever is appropriate(['r = ',num2str(scan_radius)])
+hold on
 end
-
-legend([h2,h3,h1],'Transmitter','Center of Scan','Scan points')
+%legend([h2,h3,h1],'Transmitter','Center of Scan','Scan points')
+legend(legendInfo)
 
 
 T = 0.08;
 time = T:T:num_iteration*T;
 
 
-
-figure;
-
-subplot(4,1,1);
-%plot(time,x(1,:));
-hold on;
-%plot(x_hat_data(1,1:num_iteration),'r');
-plot(time,x(1,:),'r');
-plot(time,x_hat_k(1,:));
-%title('Convergence');
-xlabel('Time') % x-axis label
-ylabel('$$\hat{x}_1$$','Interpreter','Latex');
-legend('Original state','Extended Kalman Filter')
-
-subplot(4,1,2);
-hold on;
-%plot(time,x(2,:));
-%plot(x_hat_data(2,1:num_iteration),'r');
-%plot(-20*control_data(1:num_iteration),'k');
-plot(time,x(2,:),'r');
-plot(time,x_hat_k(2,:));
-%ylim([-20,20]);
-xlabel('Time') % x-axis label
-ylabel('$$\hat{x}_2$$','Interpreter','Latex');
-
-subplot(4,1,3);
-
-hold on;
-%plot(time,x(2,:));
-%plot(x_hat_data(2,1:num_iteration),'r');
-%plot(-20*control_data(1:num_iteration),'k');
-plot(time,x(3,:),'r');
-plot(time,x_hat_k(3,:));
-ylim([-20,20]);
-xlabel('Time') % x-axis label
-ylabel('$$\hat{x}_3$$','Interpreter','Latex');
-
-subplot(4,1,4);
-hold on;
-%plot(time,x(2,:));
-%plot(y_hat_data(1,1:num_iteration),'r');
-
-plot(time, y_series(1,1:num_iteration),'r');
-%plot(time, measurement_data,'k');
-plot(time, y_hat_series,'b')
-legend('Simulated measurement','Estimated measurement')
-
-ylim([-20,20]);
-xlabel('Time') % x-axis label
-ylabel('$$\hat{y}$$','Interpreter','Latex');
-ylim([0,5]);
-
-%figure;
-dummy_x = -50:0.5:50;
-dummy_y = gaussian_value(dummy_x);
-%plot(dummy_x,dummy_y);
-
-
-
-%Movie generation
-% myVideo = VideoWriter('Videos/basic_scan.avi');
-% open(myVideo);
-% writeVideo(myVideo, frame);
-% close(myVideo);

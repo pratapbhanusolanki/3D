@@ -100,12 +100,12 @@ def get_output_array(x,previous_u,scan_parameters):
 
 #Gives Fitting Gaussian data from the module 
 def g(x):
-    a1 = 0.6972
-    b1 = -0.04401
-    c1 = 10.11
-    a2 = 0.3028
-    b2 = 0.05681
-    c2 = 25.19
+    a1 = 0.7979
+    b1 =-0.7089
+    c1 = 8.257
+    a2 = 0.2016
+    b2 =-1.076
+    c2 = 29.78
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
     y=a1*np.exp(-arg1) + a2*np.exp(-arg2)
@@ -113,33 +113,31 @@ def g(x):
 
 #computes the derivative of the gaussian function y = g_d(x)
 def g_d(x):
-    a1 = 0.6972
-    b1 = -0.04401
-    c1 = 10.11
-    a2 = 0.3028
-    b2 = 0.05681
-    c2 = 25.19
-
+    a1 = 0.7979
+    b1 =-0.7089
+    c1 = 8.257
+    a2 = 0.2016
+    b2 =-1.076
+    c2 = 29.78
     arg1 = np.power((x-b1)/c1,2)
     arg2 = np.power((x-b2)/c2,2)
     y = -2*a1*((x-b1)/(c1*c1))*np.exp(-arg1) -2*a2*((x-b2)/(c2*c2))*np.exp(-arg2)
-
     return y
 
 def gaussianValue(x):
-    a1 = 0.6972
-    b1 = -0.04401
-    c1 = 10.11
-    a2 = 0.3028
-    b2 = 0.05681
-    c2 = 25.19
+    a1 = 0.7979
+    b1 =-0.7089
+    c1 = 8.257
+    a2 = 0.2016
+    b2 =-1.076
+    c2 = 29.78
     y = a1*math.exp(-((x-b1)/c1)**2) + a2*math.exp(-((x-b2)/c2)**2)
 
 def gaussianDerivative(x):
-    a1 = 0.6972
-    b1 = -0.04401
-    c1 = 10.11
-    a2 = 0.3028
-    b2 = 0.05681
-    c2 = 25.19
+    a1 = 0.7979
+    b1 =-0.7089
+    c1 = 8.257
+    a2 = 0.2016
+    b2 =-1.076
+    c2 = 29.78
     y = -2*a1*((x-b1)/c1**2)*math.exp(-((x-b1)/c1)**2) -2*a2*((x-b2)/c2**2)*math.exp(-((x-b2)/c2)**2)

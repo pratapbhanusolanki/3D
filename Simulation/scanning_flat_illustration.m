@@ -8,8 +8,9 @@ clc;
 angle_bias(1) = 0;
 bias = angle_bias(1);
 phi = 20;
-scan_radius = 20;%10;
+scan_radius = 50;%10;
 r_source = 1;
+p_max = 125;
 
 
 %Initial position parameters
@@ -20,9 +21,6 @@ my_pos(:,1) = [0;psi(1);theta(1)]; %first entry is considered zero so as to mana
 scan_theta(1) = theta(1) + scan_radius*sind(bias);
 scan_psi(1) = psi(1) + scan_radius*cosd(bias);
 i=1;
-xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
-    yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
-    zp(i) = sind(scan_theta(i));
 
 actual_position(:,1) = [-4,55,55]'; % -4 so as to keep x1 positive 
 
@@ -34,7 +32,7 @@ y_hat_series(1) = 0;
 
 
 %Noise Covariance Matrices and Kalman filter parameters
-Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
+Q_system = 0.05*[1,0,0;0,10,0;0,0,10];
 Q = 0.1*[1,0,0;0,10,0;0,0,10;];
 R = eye(3);
 R_inv = inv(R);
@@ -68,12 +66,8 @@ normal_u3 = 0;
 
 num_iteration = 200;
 
-[X,Y] = meshgrid(-1:0.01:1);
-Z = real(sqrt(1-X.*X - Y.*Y));
-hFig = figure;
-set(hFig, 'Position', [680 678 1400 1050])
 %surf(X,Y,real(Z));
-frame(1) = getframe;
+
 hold on;
 for i=2:num_iteration
     i
@@ -120,7 +114,8 @@ for i=2:num_iteration
     x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
     P(:,:,i) = (eye(3) - K*C)*P_current;
     P_current = P(:,:,i);
-
+    temp_radius = (30/p_max)*norm(P_current);;
+    scan_radius = min(max(1,ceil(temp_radius)),30);
     difference = abs(y(1)-y_hat(1));
     diff_sum = diff_sum + difference;
     
@@ -131,7 +126,6 @@ for i=2:num_iteration
     if(difference + previous_difference < 1)
         G = 1
         G2 = 0.2;
-        scan_radius = 4
     else
         G = 0.2
         G2 = 0;
@@ -167,24 +161,24 @@ for i=2:num_iteration
     Motor_command_theta = scan_theta(i) - scan_theta(i-1);
     
     %My position
-    azimuth = my_pos(2,i);
-    elevation = my_pos(3,i);
-    [xe,ye,ze] = sph2cart(azimuth*pi/180,elevation*pi/180,r_source);
+    azimuthMe = my_pos(2,i);
+    elevationMe = my_pos(3,i);
+    [xe,ye,ze] = sph2cart(azimuthMe*pi/180,elevationMe*pi/180,r_source);
     
     %Actual source positions
-    azimuth = actual_position(2,i);
-    elevation = actual_position(3,i);
-    [xa,ya,za] = sph2cart(azimuth*pi/180,elevation*pi/180,r_source);
+    azimuthAc = actual_position(2,i);
+    elevationAc = actual_position(3,i);
+    [xa,ya,za] = sph2cart(azimuthAc*pi/180,elevationAc*pi/180,r_source);
     
     
     xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
     yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
     zp(i) = sind(scan_theta(i));
     if i > 3
-        h1 = plot3([xp(i-1) xp(i)],[yp(i-1) yp(i)], [zp(i-1) zp(i)],'-bo','MarkerFaceColor','b');
+        h1 = plot([scan_psi(i-1) scan_psi(i)],[scan_theta(i-1) scan_theta(i)],'-bo','MarkerFaceColor','b');
     end
-    h2 = plot3([ xa],[ ya],[0 za],'r*','MarkerFaceColor','r','LineWidth',2);
-    h3 = plot3([0 xe],[0 ye],[0 ze],':go','MarkerFaceColor','g','LineWidth',1);
+    h2 = plot([azimuthAc],[elevationAc],'ro','MarkerFaceColor','r','LineWidth',2);
+    h3 = plot([azimuthMe],[elevationMe],'go','MarkerFaceColor','g','LineWidth',1);
     %drawnow;
     frame(i) = getframe;
     t(i) = toc;

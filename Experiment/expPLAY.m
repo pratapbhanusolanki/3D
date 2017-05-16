@@ -23,7 +23,7 @@ B = [0,0;1,0;0,1];
 
 %Scanning parameters
 angle_bias(1) = 0;
-phi = 90;
+phi = 30;
 scan_radius = 7;
 
 %Initial position parameters
@@ -63,6 +63,7 @@ y_data = readNPY('data/y_all.npy');
 y_hat_data = readNPY('data/y_hat_all.npy');
 C_data = permute(readNPY('data/C_all.npy'),[2,3,1]);
 K_data = permute(readNPY('data/K_all.npy'),[2,3,1]);
+motor_data = readNPY('data/motor_commands_all.npy');
 num_iteration = length(x_hat_data);
 
 for i=2:num_iteration

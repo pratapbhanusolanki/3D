@@ -20,6 +20,9 @@ figure
 surf(X,Y,model_data);
 figure
 surf(X,Y,shift_model_data);
+xlabel('\phi (degree)');
+ylabel('\theta (degree)');
+zlabel('V_d (V)')
 % figure
 % plot(shift_model_data(2,:));
 % figure
