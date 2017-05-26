@@ -5,6 +5,8 @@ import cv2.cv as cv
 import cv2
 import numpy
 import struct
+from xmodem import XMODEM
+
 
 scale = 0.2
 flag = 0
@@ -34,10 +36,10 @@ ser = serial.Serial(
     baudrate=115200,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
-    bytesize=serial.SEVENBITS
+    bytesize=serial.EIGHTBITS,
+    #timeout=0
 )
 
-ser.isOpen()
 
 val = 233
 
@@ -55,7 +57,7 @@ while 1 :
     while ser.inWaiting() > 0:
         out += ser.read(1)
 
-    if out == 'sendfile\r\n':
+    if out != '':
         start = time.time()
         print "Capturing Image ...."
         #cap = cv.CaptureFromCAM(0)
@@ -74,22 +76,20 @@ while 1 :
                 print "Image capturing failed, trying again"
                 flag = 0
         print "Transmitting Image ...."
-        for i in range(0,shape_img[0]):
-            for j in range(0,shape_img[1]):
-                for k in range(0,shape_img[2]):
-                    val = img_array[i,j,k]
-                    ser.write(str(val)+'\n')
+        # for i in range(0,shape_img[0]):
+        #     for j in range(0,shape_img[1]):
+        #         for k in range(0,shape_img[2]):
+        #             val = img_array[i,j,k]
+        #             ser.write(str(val)+'\n')
+        stream = open('cam_transmitted.jpg', 'rb')
+        transmitted_data = stream.read()
+        #print modem.send('Bhanu')
+        ser.write(transmitted_data)
+        print len(transmitted_data)
+        #ser.write("\n<<EOF>>\n")
         toc = time.time()
         interval = toc - start
         print "Took " + str(interval) + " seconds to transmit the image" 
+        break
 
-    if out == 'b\r\n':
-        ser.write(str(val)+'\n')
-
-    elif out != '':
-        ser.write(out + 'received\r\n')
-        print ">>" + out + 'received here\r\n'
-
-
-            
 

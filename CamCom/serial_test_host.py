@@ -6,6 +6,10 @@ import numpy
 import struct
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from xmodem import XMODEM
+
+
+
 
 # configure the serial connections (the parameters differs on the device you are connecting to)
 ser = serial.Serial(
@@ -13,11 +17,19 @@ ser = serial.Serial(
     baudrate=115200,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
-    bytesize=serial.SEVENBITS
+    bytesize=serial.EIGHTBITS,
+    timeout=10.0
 )
 
 ser.isOpen()
 
+def getc(size, timeout=1):
+    return ser.read(size) or None
+
+def putc(data, timeout=1):
+    return ser.write(data)  # note that this ignores the timeout
+
+modem = XMODEM(getc, putc)
 print 'Enter your commands below.\r\nInsert "exit" to leave the application.'
 
 input=1
@@ -48,21 +60,32 @@ scale = 0.2
 num_cols = 480*scale
 num_rows = 640*scale
 shape_img = (int(num_cols), int(num_rows), 3)
-received_image = numpy.zeros(shape_img)
+stream = open('test_received.jpg', 'wb')
 start = time.time()
-for i in range(0,shape_img[0]):
-    for j in range(0,shape_img[1]):
-        for k in range(0,shape_img[2]):
-            kl = k
-            out = ser.readline()
-            received_image[i,j,kl] = int(out)     #RGBtoBGR issue resolved
+while ser.inWaiting() == 0:
+    num_bytes = 0
+# while ser.inWaiting()-num_bytes > 0:
+#     num_bytes = ser.inWaiting()
+    
+num_bytes = 55000
+received_data = ser.read(num_bytes)
+#print modem.recv(stream)
+#received_image = numpy.zeros(shape_img)
+# for i in range(0,shape_img[0]):
+#     for j in range(0,shape_img[1]):
+#         for k in range(0,shape_img[2]):
+#             kl = k
+#             out = ser.readline()
+#             received_image[i,j,kl] = int(out)   ived_data
+  #RGBtoBGR issue resolved
 
 toc = time.time()
 interval = toc - start
 print "Took " + str(interval) + " seconds to receive the image" 
-cv2.imwrite("cam_received.jpg", received_image)
-
+#cv2.imwrite("cam_received.jpg", received_image)
+stream.write(received_data)
+print len(received_data)
 ser.close()
-plt.imshow(received_image)
-plt.show()
+# plt.imshow(received_image)
+# plt.show()
 

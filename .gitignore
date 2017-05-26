@@ -60,6 +60,7 @@ slprj/
 /Simulation/Videos
 /Experiment/pathdef.m
 /Experiment/Hardware
+/CamCom/*.txt
 
 
 #Miscellenious
