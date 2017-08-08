@@ -15,15 +15,6 @@ xlabel('\phi (degree)');
 ylabel('r (degree)');
 zlabel('U_n');
 
-
-
-
-
-
-
-
-
-
 load 'data/large_INI_without_control.mat'
 
 figure;

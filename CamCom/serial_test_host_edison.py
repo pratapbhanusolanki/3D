@@ -1,26 +1,28 @@
 import time
 import serial
-import cv2.cv as cv
-import cv2
+import mraa
 import numpy
 import struct
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
-
 
 # configure the serial connections (the parameters differs on the device you are connecting to)
+uart = mraa.Uart(0)
+baudrate = 38400
 ser = serial.Serial(
-    port='/dev/ttyUSB0',
-    baudrate=19200,
+    port=uart.getDevicePath(),
+    baudrate=baudrate,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
     bytesize=serial.EIGHTBITS,
-    timeout=60.0
+    timeout=6.0
 )
 
 ser.isOpen()
+val = 233
 
+
+
+
+print 'Serial started \n'
 print 'Enter your commands below.\r\nInsert "exit" to leave the application.'
 
 input=1
@@ -51,32 +53,35 @@ scale = 0.2
 num_cols = 480*scale
 num_rows = 640*scale
 shape_img = (int(num_cols), int(num_rows), 3)
-stream = open('test_received.jpg', 'wb')
+image_name = 'test_received_' + str(baudrate) + '.jpg' 
+stream = open(image_name, 'wb')
 header_stream = open('header_jpg.txt','rb')  #Contains first 623 bytes, which are common for all jpegs
 header = header_stream.read()
+
+
+out = ''
+    # let's wait one second before reading output (let's give device time to answer)
+# time.sleep(1)
+# while ser.inWaiting() > 0:
+#     out += ser.read(1)
+# print out 
+# received_byte_sequence = out
+# # while ser.inWaiting() == 0:
+# #     num_bytes = 0
+# # while ser.inWaiting()-num_bytes > 0:
+# #     num_bytes = ser.inWaiting()
+# ser.write('send_image')
+print 'send_image sent'
+out = ''
+    # let's wait one second before reading output (let's give device time to answer)
+time.sleep(4)
 start = time.time()
-
-out = ''
-    # let's wait one second before reading output (let's give device time to answer)
-time.sleep(1)
-while ser.inWaiting() > 0:
-    out += ser.read(1)
-print out 
-
-# while ser.inWaiting() == 0:
-#     num_bytes = 0
-# while ser.inWaiting()-num_bytes > 0:
-#     num_bytes = ser.inWaiting()
-ser.write('send_image')
-out = ''
-    # let's wait one second before reading output (let's give device time to answer)
-time.sleep(2)
-while ser.inWaiting() > 0:
-    out += ser.read(1)
+# while ser.inWaiting() > 0:
+#     out += ser.read(1)
 #print out 
     
-#num_bytes = 60000
-received_data = out#ser.read(num_bytes)
+num_bytes = 90000
+received_data = ser.read(num_bytes)
 #print modem.recv(stream)
 #received_image = numpy.zeros(shape_img)
 # for i in range(0,shape_img[0]):
@@ -98,4 +103,3 @@ stream.close()
 header_stream.close()
 # plt.imshow(received_image)
 # plt.show()
-

@@ -45,7 +45,12 @@ slprj/
 *.mtc1
 *.out
 *.synctex.gz
+
+
+#Movies
 *.avi
+*.mov
+*.MOV
 
 
 
@@ -66,7 +71,7 @@ slprj/
 #Miscellenious
 .xml
 *.pyc
-*.DS_store
+*.DS_Store
 *.npy
 *.npz
 

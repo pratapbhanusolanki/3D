@@ -4,7 +4,6 @@ import numpy as np
 from numpy import linalg
 import math
 import scipy as sio
-from servo import Servo 
 from stepper import Stepper
 import stepper
 import linalgfunc
@@ -61,10 +60,11 @@ def setup():
 	sensorPin = mraa.Aio(5)
 
 	global BaseStepper
-	BaseStepper = Stepper(7,6,2,'sixteenth_step')
+	BaseStepper = Stepper(10,11,9,'eighth_step')
 
 	global ReceiverStepper
-	ReceiverStepper = Stepper(10,11,9,'sixteenth_step')
+	ReceiverStepper = Stepper(7,6,2,'eighth_step')
+	ReceiverStepper.rotateMotor(45)
 
 def initialize():
 	global num_iteration
@@ -159,7 +159,7 @@ x_hat[:,0] = [3,0,0]
 x_hatf_all[0,:] = x_hat[:,0]
 angle_bias = np.zeros(num_iteration) 
 phi = 30
-scan_radius = 20
+scan_radius = 5
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0

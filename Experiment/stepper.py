@@ -29,7 +29,7 @@ sixteenth_step = StepType('sixteenth_step',1,1,1,16)
 
 
 class Stepper:
-	def __init__(self,pindir,pinstep,pinenable,type_name):
+	def __init__(self,pindir,pinstep,pinenable,type_name):    #10,11, 9 
 		self.step = mraa.Gpio(pinstep)
 		self.step.dir(mraa.DIR_OUT)
 		self.direction = mraa.Gpio(pindir)
@@ -67,11 +67,14 @@ class Stepper:
 		self.enable.write(1)
 
 	def rotateMotor(self, angle):
+		print 'check_1'
 		factor = self.step_type.factor
-		steps = int((angle*403*16)/(360*factor))
+		steps = int((angle*403*factor)/(360))
+		print steps
 		self.rotateStep(steps)
 
    	def rotateStep(self,steps):
+   		print 'check_2'
    		if steps > 0:
 			self.direction.write(0)  #Pull direction pin low to move "forward"
 		else:
@@ -79,9 +82,11 @@ class Stepper:
 
 		step_count = abs(steps)
 		self.enable.write(0) ##Pull enable pin low to set FETs active and allow motor control
+		print 'check_3, enabling to 0'
 		for x in range(1,step_count):
 			self.step.write(1) #Trigger one step forward
-			usleep(100)
+			usleep(1000)
 			self.step.write(0) #Pull step pin low so it can be triggered again
-			usleep(100)
-		self.resetPins()
+			usleep(1000)
+		#self.resetPins()
+		print 'check_4, resetting pins to 0'
