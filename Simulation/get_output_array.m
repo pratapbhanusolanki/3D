@@ -15,19 +15,20 @@ function y = get_output_array(x,previous_u,scan_parameters)
 	x3 = x(3) + alpha_biases(1);
 	y1 = x1*g(x2)*g(x3);
 	
-	%Previous values
-	x1 = x(1);
-	x2 = x(2)-u2(1) + beta_biases(2);
-	x3 = x(3)-u3(1) + alpha_biases(2);
-	y2 = x1*g(x2)*g(x3);
-    
-	%Previous to previous values
-	x1 = x(1);
-	x2 = x(2)-u2(1)-u2(2) + beta_biases(3);
-	x3 = x(3)-u3(1)-u3(2) + alpha_biases(3);
+% 	%Previous values
+% 	x1 = x(1);
+% 	x2 = x(2)-u2(1) + beta_biases(2);
+% 	x3 = x(3)-u3(1) + alpha_biases(2);
+% 	y2 = x1*g(x2)*g(x3);
+%     
+% 	%Previous to previous values
+% 	x1 = x(1);
+% 	x2 = x(2)-u2(1)-u2(2) + beta_biases(3);
+% 	x3 = x(3)-u3(1)-u3(2) + alpha_biases(3);
 	y3 = x1*g(x2)*g(x3);
 
-	y = [y1;y2;y3];
+	%y = [y1;y2;y3];
+    y = y1;
 
 
 end

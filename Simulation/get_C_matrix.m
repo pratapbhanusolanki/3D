@@ -22,21 +22,21 @@ function y = get_C_matrix(x,previous_u,scan_parameters)
 	%C(1,:) = [g, x1*g_d*der_acosd*cosd(x3)*(-1)*sind(x2/18)/18, x1*g_d*der_acosd*cosd(x2/18)*(-sind(x3))];
     C(1,:) = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)];
 
-	%previous values
-	x1 = x(1);
-	x2 = x(2)-u2(1) + beta_biases(2);
-	x3 = x(3)-u3(1) + alpha_biases(2);
-
-	C(2,:) = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)];
-
-	%Previous to preious values
-	x1 = x(1);
-	x2 = x(2)-u2(1)-u2(2) + beta_biases(3);
-	x3 = x(3)-u3(1)-u3(2) + alpha_biases(3);
-
-	C(3,:) = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)];
+% 	%previous values
+% 	x1 = x(1);
+% 	x2 = x(2)-u2(1) + beta_biases(2);
+% 	x3 = x(3)-u3(1) + alpha_biases(2);
+% 
+% 	C(2,:) = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)];
+% 
+% 	%Previous to preious values
+% 	x1 = x(1);
+% 	x2 = x(2)-u2(1)-u2(2) + beta_biases(3);
+% 	x3 = x(3)-u3(1)-u3(2) + alpha_biases(3);
+% 
+% 	C(3,:) = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)];
     
-	y = C*[1,0,0; 0,scaling_coefficient,0 ; 0,0,scaling_coefficient];
+	y = C;
 
 
 end

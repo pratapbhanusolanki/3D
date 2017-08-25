@@ -36,7 +36,7 @@ y_hat_series(1) = 0;
 %Noise Covariance Matrices and Kalman filter parameters
 Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
 Q = 0.1*[1,0,0;0,10,0;0,0,10;];
-R = eye(3);
+R = 1;
 R_inv = inv(R);
 R_system = 0.1*eye(2);
 
@@ -107,14 +107,12 @@ for i=2:num_iteration
     
     % Output calculation
     measurement = exact_measurement_model(x1,x2 + beta_bias,x3 + alpha_bias) + normrnd(0,R_system(1,1));
-    y = [measurement;previous_measurement; previous_previous_measurement];
+    y = measurement;
     y_hat = get_output_array(x_hat_k(:,i-1), previous_u,scan_parameters);
     y_hat_series(i) = y_hat(1); 
     y_series(i) = measurement;
-    previous_previous_measurement = previous_measurement;
-    previous_measurement = measurement;
     
-
+  
     % Filtering    
     K = P_current*C'*inv(C*P_current*C' + R);
     x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
@@ -183,7 +181,7 @@ for i=2:num_iteration
     if i > 3
         h1 = plot3([xp(i-1) xp(i)],[yp(i-1) yp(i)], [zp(i-1) zp(i)],'-bo','MarkerFaceColor','b');
     end
-    h2 = plot3([ xa],[ ya],[0 za],'r*','MarkerFaceColor','r','LineWidth',2);
+    h2 = plot3([0 xa],[0 ya],[0 za],'r*','MarkerFaceColor','r','LineWidth',2);
     h3 = plot3([0 xe],[0 ye],[0 ze],':go','MarkerFaceColor','g','LineWidth',1);
     %drawnow;
     frame(i) = getframe;
