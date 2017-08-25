@@ -45,6 +45,7 @@ slprj/
 *.mtc1
 *.out
 *.synctex.gz
+*.fig
 
 
 #Movies
