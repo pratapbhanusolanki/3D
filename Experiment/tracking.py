@@ -1,5 +1,7 @@
 import mraa  
-import time  
+import time
+import datetime  
+import subprocess
 import numpy as np
 from numpy import linalg
 import math
@@ -8,6 +10,9 @@ from stepper import Stepper
 import stepper
 import linalgfunc
 import pdb
+import os
+import paramiko 
+paramiko.util.log_to_file('/tmp/paramiko.log')
 
 global pi
 pi = np.pi
@@ -64,7 +69,10 @@ def setup():
 
 	global ReceiverStepper
 	ReceiverStepper = Stepper(7,6,2,'eighth_step')
-	ReceiverStepper.rotateMotor(45)
+
+	global initial_pitch 
+	initial_pitch = 45
+	ReceiverStepper.rotateMotor(initial_pitch)
 
 def initialize():
 	global num_iteration
@@ -154,12 +162,14 @@ initialize()
 
 #Variables Initialization
 diff_sum = 0
+base_sum_angle = 0
+receiver_sum_angle = initial_pitch
 x_hat = np.zeros((3,num_iteration))
 x_hat[:,0] = [3,0,0]
 x_hatf_all[0,:] = x_hat[:,0]
 angle_bias = np.zeros(num_iteration) 
 phi = 30
-scan_radius = 5
+scan_radius = 10
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0
@@ -177,6 +187,7 @@ scan_theta = np.zeros(num_iteration)
 theta[0] = 10
 scan_theta[0] = theta[0]
 ReceiverStepper.rotateMotor(-theta[0])
+receiver_sum_angle = receiver_sum_angle -theta[0]
 onLights()
 time.sleep(1)
 start = time.time()
@@ -288,16 +299,34 @@ for i in range(1,num_iteration):
 	motor_commands_all[i,1] = Motor_command_receiver
 	BaseStepper.rotateMotor(Motor_command_base)
 	ReceiverStepper.rotateMotor(-Motor_command_receiver)
+	base_sum_angle = base_sum_angle + Motor_command_base
+	receiver_sum_angle = receiver_sum_angle + Motor_command_receiver
 	toc = time.time()
 	timer[i] = toc-start
 	#raw_input("Press Enter to continue...")
 	#time.sleep(0.5)
+BaseStepper.rotateMotor(-base_sum_angle)
+ReceiverStepper.rotateMotor(-receiver_sum_angle)
+st = datetime.datetime.fromtimestamp(toc).strftime('%Y-%m-%d_%H:%M:%S')
+zip_name = datetime.datetime.fromtimestamp(toc).strftime('data_%Y-%m-%d_%H:%M:%S.npz') 
 
-np.savez('data.npz', scan_parameters_all=scan_parameters_all, \
+np.savez(zip_name, scan_parameters_all=scan_parameters_all, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
 	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
 	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all,\
 	scan_psi_all=scan_psi,scan_theta_all=scan_theta, previous_u_all=previous_u_all,\
 	motor_commands_all=motor_commands_all)
-offLights()
 
+a = subprocess.check_output("who")
+user_hostname = a[a.find("(")+1:a.find(")")]
+
+# ssh_zip_name  = datetime.datetime.fromtimestamp(toc).strftime('data_%Y-%m-%d_%H\:%M\:%S.npz')
+# scp_command = "scp ./" + ssh_zip_name +" prabhanu@"+ user_hostname + ":Data"
+# sent_status = os.system(scp_command)
+
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect(user_hostname, username='prabhanu')
+sftp = ssh.open_sftp()
+
+sftp.put(zip_name,'GoogleDrive/MSU/Research/AlignmentOpticalCommunication/3D/Experiment/Data/' + zip_name)

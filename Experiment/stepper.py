@@ -85,8 +85,8 @@ class Stepper:
 		print 'check_3, enabling to 0'
 		for x in range(1,step_count):
 			self.step.write(1) #Trigger one step forward
-			usleep(1000)
+			usleep(500)
 			self.step.write(0) #Pull step pin low so it can be triggered again
-			usleep(1000)
+			usleep(500)
 		#self.resetPins()
 		print 'check_4, resetting pins to 0'
