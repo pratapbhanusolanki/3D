@@ -92,7 +92,7 @@ def initialize():
 	Q = 0.1*Q
 
 	global R
-	R = np.identity(3)
+	R = 0.11
 
 	global P_current
 	P_current = np.identity(3)
@@ -223,12 +223,12 @@ for i in range(1,num_iteration):
 	#print P_current
     #Output Calculation
 	measurement = getIntensity()
-	y = np.array([[measurement],[previous_measurement],[previous_previous_measurement]])
-	y_all[i,:] = np.transpose(y)
+	y = measurement
+	y_all[i] = y
 	#print y
 
 	y_hat = linalgfunc.get_output_array(x_hat_k, previous_u,scan_parameters)
-	y_hat_all[i,:] = np.transpose(y_hat)
+	y_hat_all[i] = np.transpose(y_hat)
 	y_hat 
 	#print y_hat 
 	previous_previous_measurement = previous_measurement
@@ -242,7 +242,7 @@ for i in range(1,num_iteration):
 	P_current = (np.identity(3) - K*C)*P_current
 	P_all[i,:,:] = P_current
 
-	difference = abs(y[0]-y_hat[0])
+	difference = abs(y-y_hat)
 	diff_sum = diff_sum + difference
 	
 	if x_hat[0,i] < 0:
@@ -329,4 +329,4 @@ ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect(user_hostname, username='prabhanu')
 sftp = ssh.open_sftp()
 
-sftp.put(zip_name,'GoogleDrive/MSU/Research/AlignmentOpticalCommunication/3D/Experiment/Data/' + zip_name)
+sftp.put(zip_name,'GoogleDriveOld/MSU/Research/AlignmentOpticalCommunication/3D/Experiment/Data/' + zip_name)

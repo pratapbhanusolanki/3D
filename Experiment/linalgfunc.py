@@ -39,7 +39,7 @@ def cosd(x):
     return cos(tempx)
 
 def get_C_matrix(x,previous_u,scan_parameters):
-    C = np.zeros((3,3))
+    C = np.zeros((1,3))
     u2 = previous_u[0,:]
     u3 = previous_u[1,:]
     scan_radius = scan_parameters[0]
@@ -53,17 +53,6 @@ def get_C_matrix(x,previous_u,scan_parameters):
     x3 = x[2] + alpha_biases[0]
     C[0,:] = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)]
 
-    #previous values
-    x1 = x[0]
-    x2 = x[1]-u2[0] + beta_biases[1]
-    x3 = x[2]-u3[0] + alpha_biases[1]
-    C[1,:] = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)]
-
-    #Previous to preious values
-    x1 = x[0]
-    x2 = x[1]-u2[0]-u2[1] + beta_biases[2]
-    x3 = x[2]-u3[0]-u3[1] + alpha_biases[2]
-    C[2,:] = [g(x1)*g(x2), x1*g_d(x2)*g(x3), x1*g(x2)*g_d(x3)]
     #pdb.set_trace()
     Adum = np.matrix([[1,0,0],[0,scaling_coefficient,0],[0,0,scaling_coefficient]])
     y = C*Adum
@@ -81,20 +70,8 @@ def get_output_array(x,previous_u,scan_parameters):
     x1 = x[0]
     x2 = x[1] + beta_biases[0]
     x3 = x[2] + alpha_biases[0]
-    y1 = x1*g(x2)*g(x3)
+    y = x1*g(x2)*g(x3)
 
-    #Previous values
-    x1 = x[0]
-    x2 = x[1]-u2[0] + beta_biases[1]
-    x3 = x[2]-u3[0] + alpha_biases[1]
-    y2 = x1*g(x2)*g(x3)
-
-    #Previous to previous values
-    x1 = x[0]
-    x2 = x[1]-u2[0]-u2[1] + beta_biases[2]
-    x3 = x[2]-u3[0]-u3[1] + alpha_biases[2]
-    y3 = x1*g(x2)*g(x3)
-    y = np.array([[y1],[y2],[y3]])
     return y
 
 #Gives Fitting Gaussian data from the module 
