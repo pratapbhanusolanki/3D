@@ -62,7 +62,7 @@ def setup():
 	Light.dir(mraa.DIR_OUT) 
 
 	global sensorPin
-	sensorPin = mraa.Aio(5)
+	sensorPin = mraa.Aio(0)
 
 	global BaseStepper
 	BaseStepper = Stepper(10,11,9,'eighth_step')
@@ -107,6 +107,9 @@ def initialize():
 	x_hatf_all = np.zeros((num_iteration,3))
 
 	global x_hat_all
+	x_hat_all = np.zeros((num_iteration,3))
+
+	global x_I_hat_all
 	x_hat_all = np.zeros((num_iteration,3))
 
 	global y_hat_all
@@ -166,10 +169,12 @@ base_sum_angle = 0
 receiver_sum_angle = initial_pitch
 x_hat = np.zeros((3,num_iteration))
 x_hat[:,0] = [3,0,0]
+x_I_hat = np.zeros((3,num_iteration))
+x_I_hat[:,0] = x_hat[:,0]
 x_hatf_all[0,:] = x_hat[:,0]
 angle_bias = np.zeros(num_iteration) 
 phi = 30
-scan_radius = 10
+scan_radius = 7
 u2_previous = -1.0
 u3_previous = -2.0
 normal_u2 = 0
@@ -184,19 +189,28 @@ timer = np.zeros(num_iteration)
 theta = np.zeros(num_iteration)
 scan_psi = np.zeros(num_iteration)
 scan_theta = np.zeros(num_iteration)
+difference = np.zeros(num_iteration)
+difference[0] = 0.5
 theta[0] = 10
 scan_theta[0] = theta[0]
 ReceiverStepper.rotateMotor(-theta[0])
 receiver_sum_angle = receiver_sum_angle -theta[0]
+disturbance_term = np.zeros(num_iteration) 
+interval = np.zeros(num_iteration) 
+
+disturbance = 2   #degree/second
+T = 0
+
 onLights()
 time.sleep(1)
 start = time.time()
 for i in range(1,num_iteration):
-	print i
-	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3]
+	print 'i= %d' %(i)
+	x_hat_k = x_hat[:,i-1] + [0,normal_u2,normal_u3] 
 	x_hatf_all[i,:] = x_hat_k
 
 	angle_bias[i] = angle_bias[i-1] + phi
+	scan_radius = max(2,math.floor(0.7*scan_radius + 0.3*min(math.floor(diff_sum*100),10)))
 	bias = angle_bias[i]
 	previous_alpha_bias = scan_radius*sind(bias-phi)
 	previous_beta_bias = scan_radius*cosd(bias-phi)
@@ -223,6 +237,7 @@ for i in range(1,num_iteration):
 	#print P_current
     #Output Calculation
 	measurement = getIntensity()
+	print 'Measurement %f' %(measurement)
 	y = measurement
 	y_all[i] = y
 	#print y
@@ -238,31 +253,34 @@ for i in range(1,num_iteration):
 	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
 	K_all[i,:,:] = K
 
-	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T                        
+	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T   
+	if x_hat[0,i] < 0:
+		x_hat[0,i] = 0
+	x_I_hat[:,i] = x_I_hat[:,i-1] + x_hat[:,i]              
 	P_current = (np.identity(3) - K*C)*P_current
 	P_all[i,:,:] = P_current
 
-	difference = abs(y-y_hat)
-	diff_sum = diff_sum + difference
-	
-	if x_hat[0,i] < 0:
-		x_hat[0,i] = 0
+	difference[i] = abs((y-y_hat)/y)
+	min_ind = max(i-2,0)
+	diff_sum = sum(difference[min_ind:i+1])/3
+
 	x_hat_all[i,:] = x_hat[:,i]
     
-	if(difference + previous_difference < 1):
-		G = 0.2
-		G2 = 0.2
+	if(diff_sum < 0.3):
+		G = 0.5
+		Gi = 0.1
 	else:
 		G = 0.0
-		G2 = 0
+		Gi = 0
 
-	G = 0.0
 	# G2 = 0
 	# G=0.2
 
-	previous_difference = difference
-	normal_u2 = -G*x_hat[1,i]
-	normal_u3 = -G*x_hat[2,i]
+	#previous_difference = difference
+	normal_u2 = -G*x_hat[1,i] - Gi*x_I_hat[1,i] 
+	normal_u3 = -G*x_hat[2,i] - Gi*x_I_hat[2,i] 
+	disturbance_term[i] = disturbance*interval[i-1]
+	print 'normal_u2 %f,  normal_u3 %f' %(normal_u2, normal_u3)
 	u_all[i,:] = [0,normal_u2,normal_u3]
 	
 	u2 = np.array([[normal_u2], [u2_previous]])
@@ -272,7 +290,7 @@ for i in range(1,num_iteration):
 	# normal_u3 = 0
 	# normal_u2 = 0
 
-	dummy_u3,u2_k = angle_transform(normal_u3, normal_u2, theta[i-1])
+	dummy_u3,u2_k = angle_transform(normal_u3 - disturbance_term[i], normal_u2 + disturbance_term[i], theta[i-1])
 	u3_k = dummy_u3 - theta[i-1]
 	psi[i] = psi[i-1] + u2_k
 	theta[i] = theta[i-1] + u3_k
@@ -290,11 +308,12 @@ for i in range(1,num_iteration):
 	# u2_previous = normal_u2
 	# u3_previous = normal_u3
 
-	Motor_command_base = scan_psi[i] - scan_psi[i-1]
-	Motor_command_receiver = scan_theta[i] - scan_theta[i-1]
+	Motor_command_base = scan_psi[i] - scan_psi[i-1]  
+	Motor_command_receiver = scan_theta[i] - scan_theta[i-1] 
+	
 	#Motor_command_receiver = 0
-	print Motor_command_base 
-	print -Motor_command_receiver
+	#print Motor_command_base 
+	#print -Motor_command_receiver
 	motor_commands_all[i,0] = Motor_command_base
 	motor_commands_all[i,1] = Motor_command_receiver
 	BaseStepper.rotateMotor(Motor_command_base)
@@ -302,18 +321,22 @@ for i in range(1,num_iteration):
 	base_sum_angle = base_sum_angle + Motor_command_base
 	receiver_sum_angle = receiver_sum_angle + Motor_command_receiver
 	toc = time.time()
+
 	timer[i] = toc-start
-	#raw_input("Press Enter to continue...")
-	#time.sleep(0.5)
-BaseStepper.rotateMotor(-base_sum_angle)
-ReceiverStepper.rotateMotor(-receiver_sum_angle)
-st = datetime.datetime.fromtimestamp(toc).strftime('%Y-%m-%d_%H:%M:%S')
-zip_name = datetime.datetime.fromtimestamp(toc).strftime('data_%Y-%m-%d_%H:%M:%S.npz') 
+	interval[i] = timer[i] - timer[i-1]
+
+	if i == num_iteration/2:
+		T = sum(interval[1:i+1])/i
+
+	
+
+st = datetime.datetime.fromtimestamp(toc).strftime('%Y-%m-%d_%I:%M:%S %p')
+zip_name = datetime.datetime.fromtimestamp(toc).strftime('data_%Y-%m-%d_%I:%M:%S_%p.npz') 
 
 np.savez(zip_name, scan_parameters_all=scan_parameters_all, \
 	x_hatf_all=x_hatf_all, x_hat=x_hat, Pf_all=Pf_all,\
 	C_all=C_all, x_hat_all=x_hat_all, y_hat_all=y_hat_all,\
-	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer, u_all=u_all,\
+	y_all=y_all, P_all=P_all, K_all=K_all, timer=timer,interval = interval,disturbance_term = disturbance_term, u_all=u_all,\
 	scan_psi_all=scan_psi,scan_theta_all=scan_theta, previous_u_all=previous_u_all,\
 	motor_commands_all=motor_commands_all)
 
@@ -330,3 +353,4 @@ ssh.connect(user_hostname, username='prabhanu')
 sftp = ssh.open_sftp()
 
 sftp.put(zip_name,'GoogleDriveOld/MSU/Research/AlignmentOpticalCommunication/3D/Experiment/Data/' + zip_name)
+os.remove(zip_name)

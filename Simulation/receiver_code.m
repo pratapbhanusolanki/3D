@@ -7,7 +7,7 @@ clc;
 %Scanning parameters
 angle_bias(1) = 0;
 bias = angle_bias(1);
-phi = 20;
+phi = 30;
 scan_radius = 20;%10;
 r_source = 1;
 
@@ -21,17 +21,16 @@ scan_theta(1) = theta(1) + scan_radius*sind(bias);
 scan_psi(1) = psi(1) + scan_radius*cosd(bias);
 i=1;
 xp(i) = cosd(scan_theta(i))*cosd(scan_psi(i));
-    yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
-    zp(i) = sind(scan_theta(i));
+yp(i) = cosd(scan_theta(i))*sind(scan_psi(i));
+zp(i) = sind(scan_theta(i));
 
 actual_position(:,1) = [-4,55,55]'; % -4 so as to keep x1 positive 
 
 x(:,1) = my_pos(:,1)-actual_position(:,1);
 x_hat_k(:,1) = [3,0,0]';
+x_I_hat_k(:,1) = x_hat_k(:,1);
 
 y_hat_series(1) = 0;
-
-
 
 %Noise Covariance Matrices and Kalman filter parameters
 Q_system = 0.01*[1,0,0;0,10,0;0,0,10];
@@ -60,7 +59,7 @@ u3 = [u3_k; u3_previous];
 previous_measurement = 0;
 previous_previous_measurement = 0;
 
-diff_sum = 0;
+diff_sum = 0.2;
 previous_difference = 0;
 normal_u2 = 0;
 normal_u3 = 0;
@@ -84,13 +83,11 @@ for i=2:num_iteration
     x2_temp = my_pos(2,i)-actual_position(2,i);
     [x3,x2] = angle_transform(my_pos(3,i), x2_temp, -actual_position(3,i));
 	%theta(i) = theta(i-1) + u3_k;
-    
-	x1_hat_k = x_hat_k(1,i-1);
-    x2_hat_k = x_hat_k(2,i-1);
-    x3_hat_k = x_hat_k(3,i-1);
-    
+        
     x(:,i) = [x1;x2;x3];
     angle_bias(i) = angle_bias(i-1) + phi;
+    scan_radius = max(2,floor(0.7*scan_radius + 0.3*min(floor(diff_sum*100),10)));
+    scan_radii(i) = scan_radius;
     bias = angle_bias(i);
 	previous_alpha_bias = scan_radius*sind(bias-phi);
 	previous_beta_bias = scan_radius*cosd(bias-phi);
@@ -116,30 +113,38 @@ for i=2:num_iteration
     % Filtering    
     K = P_current*C'*inv(C*P_current*C' + R);
     x_hat_k(:,i) = x_hat_k(:,i-1)+K*(y-y_hat);
+    if x_hat_k(1,i) < 0
+        x_hat_k(1,i) = 0;
+    end
+    x_I_hat_k(:,i) = x_I_hat_k(:,i-1) + x_hat_k(:,i-1);
     P(:,:,i) = (eye(3) - K*C)*P_current;
     P_current = P(:,:,i);
 
-    difference = abs(y(1)-y_hat(1));
-    diff_sum = diff_sum + difference;
+    difference(i) = abs((y-y_hat)/y);
+    min_ind = max(i-2,1)
+    diff_sum = sum(difference(min_ind:i))/3;
     
     if x_hat_k(1,i) < 0
         x_hat_k(1,i) = 0;
     end
     
-    if(difference + previous_difference < 1)
-        G = 1
-        G2 = 0.2;
-        scan_radius = 4
+    if(diff_sum < 0.3)
+        G = 0.5
+        Gi = 0.0;
     else
-        G = 0.2
-        G2 = 0;
+        G = 0.0
+        Gi = 0;
     end
     
     %G = 0.0;
+    
+%     G = 0.5
+%     Gi = 0.01
+    
     previous_difference = difference;
     
-    normal_u2 = -G*x_hat_k(2,i);
-    normal_u3 = -G*x_hat_k(3,i);
+    normal_u2 = -G*x_hat_k(2,i)-Gi*x_I_hat_k(2,i);
+    normal_u3 = -G*x_hat_k(3,i)-Gi*x_I_hat_k(3,i);
     
     u2 = [normal_u2; u2_previous];
     u3 = [normal_u3; u3_previous];
@@ -198,7 +203,7 @@ time = T:T:num_iteration*T;
 
 figure;
 
-subplot(4,1,1);
+subplot(5,1,1);
 %plot(time,x(1,:));
 hold on;
 %plot(x_hat_data(1,1:num_iteration),'r');
@@ -209,7 +214,7 @@ xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_1$$','Interpreter','Latex');
 legend('Original state','Extended Kalman Filter')
 
-subplot(4,1,2);
+subplot(5,1,2);
 hold on;
 %plot(time,x(2,:));
 %plot(x_hat_data(2,1:num_iteration),'r');
@@ -220,7 +225,7 @@ plot(time,x_hat_k(2,:));
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_2$$','Interpreter','Latex');
 
-subplot(4,1,3);
+subplot(5,1,3);
 
 hold on;
 %plot(time,x(2,:));
@@ -232,7 +237,7 @@ ylim([-20,20]);
 xlabel('Time') % x-axis label
 ylabel('$$\hat{x}_3$$','Interpreter','Latex');
 
-subplot(4,1,4);
+subplot(5,1,4);
 hold on;
 %plot(time,x(2,:));
 %plot(y_hat_data(1,1:num_iteration),'r');
@@ -252,7 +257,8 @@ dummy_x = -50:0.5:50;
 dummy_y = gaussian_value(dummy_x);
 %plot(dummy_x,dummy_y);
 
-
+subplot(5,1,5);
+plot(time, scan_radii,'r');
 
 %Movie generation
 % myVideo = VideoWriter('Videos/basic_scan.avi');

@@ -67,14 +67,14 @@ class Stepper:
 		self.enable.write(1)
 
 	def rotateMotor(self, angle):
-		print 'check_1'
+		#print 'check_1'
 		factor = self.step_type.factor
 		steps = int((angle*403*factor)/(360))
-		print steps
+		#print steps
 		self.rotateStep(steps)
 
    	def rotateStep(self,steps):
-   		print 'check_2'
+   		#print 'check_2'
    		if steps > 0:
 			self.direction.write(0)  #Pull direction pin low to move "forward"
 		else:
@@ -82,11 +82,11 @@ class Stepper:
 
 		step_count = abs(steps)
 		self.enable.write(0) ##Pull enable pin low to set FETs active and allow motor control
-		print 'check_3, enabling to 0'
+		#print 'check_3, enabling to 0'
 		for x in range(1,step_count):
 			self.step.write(1) #Trigger one step forward
-			usleep(500)
+			usleep(1000)
 			self.step.write(0) #Pull step pin low so it can be triggered again
-			usleep(500)
+			usleep(1000)
 		#self.resetPins()
-		print 'check_4, resetting pins to 0'
+		#print 'check_4, resetting pins to 0'
