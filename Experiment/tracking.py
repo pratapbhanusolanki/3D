@@ -198,8 +198,8 @@ receiver_sum_angle = receiver_sum_angle -theta[0]
 disturbance_term = np.zeros(num_iteration) 
 interval = np.zeros(num_iteration) 
 
-disturbance = 2   #degree/second
-T = 0
+disturbance = 1   #degree/second
+T = 0.8
 
 onLights()
 time.sleep(1)
@@ -211,6 +211,7 @@ for i in range(1,num_iteration):
 
 	angle_bias[i] = angle_bias[i-1] + phi
 	scan_radius = max(2,math.floor(0.7*scan_radius + 0.3*min(math.floor(diff_sum*100),10)))
+	#scan_radius = 7
 	bias = angle_bias[i]
 	previous_alpha_bias = scan_radius*sind(bias-phi)
 	previous_beta_bias = scan_radius*cosd(bias-phi)
@@ -248,7 +249,7 @@ for i in range(1,num_iteration):
 	#print y_hat 
 	previous_previous_measurement = previous_measurement
 	previous_measurement = measurement
-	
+
 	#Filtering    
 	K = P_current*np.transpose(C)*linalg.inv(C*P_current*np.transpose(C) + R)
 	K_all[i,:,:] = K
@@ -256,7 +257,7 @@ for i in range(1,num_iteration):
 	x_hat[:,i] = np.array(np.mat(x_hat_k).T+K*(y-y_hat)).T   
 	if x_hat[0,i] < 0:
 		x_hat[0,i] = 0
-	x_I_hat[:,i] = x_I_hat[:,i-1] + x_hat[:,i]              
+	x_I_hat[:,i] = x_I_hat[:,i-1] + x_hat[:,i]*interval[i-1]            
 	P_current = (np.identity(3) - K*C)*P_current
 	P_all[i,:,:] = P_current
 
@@ -325,8 +326,8 @@ for i in range(1,num_iteration):
 	timer[i] = toc-start
 	interval[i] = timer[i] - timer[i-1]
 
-	if i == num_iteration/2:
-		T = sum(interval[1:i+1])/i
+	
+	T = sum(interval[1:i+1])/i
 
 	
 
